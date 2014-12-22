@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>SchemeUserState</key>
+	<dict>
+		<key>RecFrame.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
+		<key>SendFrame.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
+		<key>UDPVidStream.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>0</integer>
+		</dict>
+	</dict>
+	<key>SuppressBuildableAutocreation</key>
+	<dict>
+		<key>309A9E431946130A0009E07E</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>309A9E53194613270009E07E</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>309A9E60194613580009E07E</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>309A9E6D194613670009E07E</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+	</dict>
+</dict>
+</plist>
