@@ -3,20 +3,37 @@
 #include "InputDevice.h"
 #include "Kinect2.h"
 #include <thread>
+#include <Windows.h>
+
+// Need to link with Ws2_32.lib
+#pragma comment (lib, "Ws2_32.lib")
 
 class NetServer
 {
 public:
-	NetServer();
+	NetServer(std::string remAddr, int basePort, InputDevice *cam);
 	~NetServer();
 	void start();
 
 private:
-	void run();
+	static void run(NetServer *me);
+	int initSockets();
+	int initUDPSocket(SOCKET* s, sockaddr_in* sa);
+	SOCKET* getSock(SOCKTYPE s);
+	sockaddr_in* getSockAddrIn(SOCKTYPE s);
 
+	//The device that gets our data
 	InputDevice *camera;
-	int port;
+	
+	//The thread the server runs on
+	std::thread *thread;
+	
+	//Socket data
+	int *port;
 	char *addr;
-	bool running = false;
+	SOCKET colSock = INVALID_SOCKET;
+	SOCKET depSock = INVALID_SOCKET;
+	sockaddr_in remColClient;
+	sockaddr_in remDepClient;
 };
 
