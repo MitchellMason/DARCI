@@ -13,7 +13,7 @@ videoFrame::videoFrame(int width, int height, VIDEOTYPE vt){
 	switch (vt)
 	{
 	case vCOLOR:
-		res->bytesPerPixel = 3; //RGBA
+		res->bytesPerPixel = 3; //RGB
 		break;
 	case vDEPTH:
 		res->bytesPerPixel = 2; //assuming 16 bits of accuracy

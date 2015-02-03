@@ -53,13 +53,13 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>C:\Program Files\SDL2-2.0.3\include;C:\Program Files\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\squish-1.11;C:\Program Files\SDL2-2.0.3\include;C:\Program Files\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Program Files\SDL2-2.0.3\VisualC\SDL\Win32\Debug;C:\Program Files\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\Lib\x86;C:\Program Files\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\Lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Kinect20.lib;SDL2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files\squish-1.11\lib\vs9;C:\Program Files\SDL2-2.0.3\VisualC\SDL\Win32\Debug;C:\Program Files\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\Lib\x86;C:\Program Files\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\Lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Kinect20.lib;SDL2.lib;squishd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>

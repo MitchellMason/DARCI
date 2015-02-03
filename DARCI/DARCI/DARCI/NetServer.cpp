@@ -54,49 +54,49 @@ void NetServer::run(NetServer *me){
 	sockaddr_in dClient = *me->getSockAddrIn(SOCKTYPE::DEPTH);
 
 	//data used during transfer
-	int bytesSent = 0;
+	int bytesSent;
 
-	//serve content
+	//server metrics
 	int framesSent = 0;
+	const bool debug = false;
+
+	//buffer allocation
+	videoFrame *cFrame = new videoFrame(colFeedAttributes.width, colFeedAttributes.height, VIDEOTYPE::vCOLOR);
+	videoFrame *dFrame = new videoFrame(depFeedAttributes.width, depFeedAttributes.height, VIDEOTYPE::vDEPTH);
+	int colPacketLen = 3 * colFeedAttributes.width * 10 + sizeof(INT32);
+	int depPacketLen = depFeedAttributes.bytesPerPixel * depFeedAttributes.width + sizeof(short);
+	BYTE *colPacket = new BYTE[colPacketLen];
+	BYTE *depPacket = new BYTE[depPacketLen];
+
 	while (threadRunning){
 		framesSent++;
+		bytesSent = 0;
 		
 		//mark the beginning of the transfer
 		GetSystemTime(time);
 		startT = (time->wSecond * 1000) + time->wMilliseconds;
-
+		
+		if (debug) printf("getting video data.\n");
+		
 		//get the data
-		videoFrame *cFrame = new videoFrame(colFeedAttributes.width, colFeedAttributes.height, VIDEOTYPE::vCOLOR);
-		videoFrame *dFrame = new videoFrame(depFeedAttributes.width, depFeedAttributes.height, VIDEOTYPE::vDEPTH);
 		me->camera->getColor(cFrame);
 		me->camera->getDepth(dFrame);
 		
 		/***send the data***/
 		
+		if (debug) printf("sending color data.\n");
+
 		//Color
-		int colPacketLen = (cFrame->getWidth() * cFrame->getBytesPerPixel()) + sizeof(unsigned short);
-		BYTE *colPacket = new BYTE[colPacketLen];
-		int vBuffWid = cFrame->getWidth() * 3;    //In bytes
-		int vBuffHei = cFrame->getHeight();       //In pixels
-		unsigned char *vBuffLoc = cFrame->getBuffer();
-		for (unsigned short i = 0; i < vBuffHei; i++){
-			//append the scanline index
-			colPacket[0] = (BYTE)((i & 0xFF00) >> 8);
-			colPacket[1] = (BYTE)(i & 0x00FF);
-
-			//Copy the color data into the packet buffer
-			memcpy(&colPacket[2], vBuffLoc + (i * vBuffWid), vBuffWid);
-
-			//Down the series of tubes
+		//create the packets and send them
+		for (int i = 0; i < 10; i++){
+			memcpy(&colPacket[0], &i, sizeof(INT32)); //so each packet can be correctly placed in the scene
+			memcpy(&colPacket[sizeof(INT32)], cFrame->getBuffer() + (i * 10 * cFrame->getWidth()), colPacketLen);
 			bytesSent += sendto(cSock, (const char *)colPacket, colPacketLen, 0, (const sockaddr*)&cClient, sizeof(sockaddr));
 		}
-		
-		delete cFrame;
-		delete[] colPacket;
+
+		if (debug) printf("sending depth frame.\n");
 
 		//Depth
-		int depPacketLen = depFeedAttributes.bytesPerPixel * depFeedAttributes.width + sizeof(short);
-		BYTE *depPacket = new BYTE[depPacketLen];
 		int dBuffWid = depFeedAttributes.width * depFeedAttributes.bytesPerPixel; //in bytes
 		int dBuffHei = depFeedAttributes.height;
 		unsigned char *dBuffLoc = dFrame->getBuffer();
@@ -114,9 +114,6 @@ void NetServer::run(NetServer *me){
 			bytesSent += sendto(dSock, (const char *)depPacket, depPacketLen, 0, (const sockaddr *)&dClient, sizeof(sockaddr));
 		}
 
-		delete dFrame;
-		delete[] depPacket;
-
 		
 		//check for errors
 		if (bytesSent <= 0){
@@ -128,12 +125,20 @@ void NetServer::run(NetServer *me){
 		GetSystemTime(time);
 		endT = (time->wSecond * 1000) + time->wMilliseconds;
 		opTime = endT - startT;
-		// printf("Color done. %i bytes sent in %i ms for %i bytes per ms.\n", bytesSent, opTime, bytesSent/opTime);
-		bytesSent = 0;
-		if (opTime < (long)delayTime){ Sleep((long)delayTime - opTime); }
-		else{ printf("WARNING: SERVER IS NOT SENDING CONTENT ON TIME: %i ms.\n",opTime); }
+		printf("\r%i bytes sent in %i ms for %i bytes per ms.", bytesSent, opTime, bytesSent/opTime);
+		if (opTime < (long)delayTime){ 
+			//Sleep((long)delayTime - opTime);
+		}
+		else{ 
+			//printf("\nWARNING: SERVER IS NOT SENDING CONTENT ON TIME: %i ms.\n",opTime); 
+		}
 	}
-	printf("Server not running.\n");
+
+	delete[] colPacket;
+	delete[] depPacket;
+	delete cFrame;
+	delete dFrame;
+	printf("Server no longer running.\n");
 }
 
 //initialize and bind the sockets, as well as the addresses
