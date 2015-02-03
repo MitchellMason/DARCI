@@ -39,7 +39,7 @@ void init(){
 	client = new NetClient(basePort);
 	ncData = new netClientData;
 
-	client->start(ncData);
+	//client->start(ncData);
 
 	//start the renderer
 	printf("-Starting renderer.\n");
@@ -49,7 +49,8 @@ void init(){
 //Runs forever while application is active
 void loop(){
 	//Get and handle sdl events TODO
-	Sleep(100);
+	//renderer->draw();
+	Sleep(32);
 }
 
 //Entry point for application. 

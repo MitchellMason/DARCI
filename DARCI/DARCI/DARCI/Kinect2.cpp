@@ -119,7 +119,7 @@ void Kinect2::getColor(videoFrame* vframe) {
 		hr = colReader->AcquireLatestFrame(&kColData);
 
 		//Ensure there were no errors
-		if (SUCCEEDED(hr) && kColData){
+		if (SUCCEEDED(hr) && kColData){//TODO revert
 			kColData->CopyConvertedFrameDataToArray(cByteBuffALen, cByteBuffA, ColorImageFormat_Bgra);
 		}
 		else{
@@ -144,12 +144,12 @@ void Kinect2::getColor(videoFrame* vframe) {
 	}
 
 	//remove the alpha
-	int cByteBuffNoALen = kColHeight * kColWidth * 3; //RGB only
+	int cByteBuffNoALen = kColHeight * kColWidth * (kColBytesPerPix-1); //RGB only
 	BYTE *cByteBuffNoA = new BYTE[cByteBuffNoALen];
 	for (int i = 0, j = 0; i < cByteBuffALen; ){
-		cByteBuffNoA[j+0] = cByteBuffA[i+0];
+		cByteBuffNoA[j+0] = cByteBuffA[i+2];
 		cByteBuffNoA[j + 1] = cByteBuffA[i + 1];
-		cByteBuffNoA[j + 2] = cByteBuffA[i + 2];
+		cByteBuffNoA[j + 2] = cByteBuffA[i + 0];
 		j += 3;
 		i += 4;
 	}
@@ -159,6 +159,7 @@ void Kinect2::getColor(videoFrame* vframe) {
 	if (kColData)
 		kColData->Release();
 	delete[] cByteBuffA;
+	delete[] cByteBuffNoA;
 }
 void Kinect2::getDepth(videoFrame* dframe) {
 	//ensure the kinect is still open and ready

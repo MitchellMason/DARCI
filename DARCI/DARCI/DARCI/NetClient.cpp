@@ -76,6 +76,9 @@ void NetClient::run(NetClient *me, netClientData *data){
 	if (highestFD < *cSock) highestFD = *cSock;
 	if (highestFD < *dSock) highestFD = *dSock;
 
+	BYTE *recvBuff = new BYTE[data->cAttrib.bytesPerPixel * data->cAttrib.width * 10];
+	bool newColData = false;
+	bool newDepData = false;
 	while (me->running){
 		FD_ZERO(socks);
 		FD_SET(*cSock, socks);
@@ -86,18 +89,29 @@ void NetClient::run(NetClient *me, netClientData *data){
 
 		//read whatever data is ready
 		if (FD_ISSET(*cSock, socks)){
-			while (data->colorLock){ /* wait on lock */ }
+			newColData = true;
+			//while (data->colorLock){ /* wait on lock */ }
 			data->colorLock = true;
 			recv(*cSock, (char *) data->colorBuff, 1920 * 1080 * 3, 0);
 			data->colorLock = false;
 		}
 		if (FD_ISSET(*dSock, socks)){
-			while (data->colorLock){ /* wait on lock */ }
+			newDepData = true;
+			//while (data->colorLock){ /* wait on lock */ }
 			data->colorLock = true;
 			recv(*cSock, (char *)data->colorBuff, 512 * 424 * 2, 0);
 			data->colorLock = false;
 		}
+		if (newColData){
+			//copy buffers
+		}
+		if (newDepData){
+			//copy buffers
+		}
+		newColData = false;
+		newDepData = false;
 	}
+	delete[] recvBuff;
 }
 SOCKET* NetClient::getSock(SOCKTYPE s){
 	switch (s)

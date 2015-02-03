@@ -88,7 +88,7 @@ void NetServer::run(NetServer *me){
 
 		//Color
 		//create the packets and send them
-		for (int i = 0; i < 10; i++){
+		for (int i = 0; i < 108; i++){
 			memcpy(&colPacket[0], &i, sizeof(INT32)); //so each packet can be correctly placed in the scene
 			memcpy(&colPacket[sizeof(INT32)], cFrame->getBuffer() + (i * 10 * cFrame->getWidth()), colPacketLen);
 			bytesSent += sendto(cSock, (const char *)colPacket, colPacketLen, 0, (const sockaddr*)&cClient, sizeof(sockaddr));
