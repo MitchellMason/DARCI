@@ -4,7 +4,7 @@
 #include "Kinect2.h"
 #include <thread>
 #include <Windows.h>
-#include <squish.h>
+#include <vlc/vlc.h>
 
 // Need to link with Ws2_32.lib
 #pragma comment (lib, "Ws2_32.lib")
@@ -36,5 +36,8 @@ private:
 	SOCKET depSock = INVALID_SOCKET;
 	sockaddr_in remColClient;
 	sockaddr_in remDepClient;
+
+	//streaming data
+	libvlc_media_t *inst;
 };
 

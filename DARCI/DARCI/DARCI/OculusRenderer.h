@@ -13,5 +13,7 @@ private:
 	SDL_Window *window;
 	SDL_Surface *surf;
 	netClientData *data;
+
+
 };
 

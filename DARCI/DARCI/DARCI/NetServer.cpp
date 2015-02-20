@@ -53,18 +53,18 @@ void NetServer::run(NetServer *me){
 	SOCKET dSock = *me->getSock(SOCKTYPE::DEPTH);
 	sockaddr_in dClient = *me->getSockAddrIn(SOCKTYPE::DEPTH);
 
-	//data used during transfer
-	int bytesSent;
-
+	
 	//server metrics
 	int framesSent = 0;
+	int errorCheck = 0;
+	int bytesSent;
 	const bool debug = false;
 
 	//buffer allocation
 	videoFrame *cFrame = new videoFrame(colFeedAttributes.width, colFeedAttributes.height, VIDEOTYPE::vCOLOR);
 	videoFrame *dFrame = new videoFrame(depFeedAttributes.width, depFeedAttributes.height, VIDEOTYPE::vDEPTH);
 	int colPacketLen = 3 * colFeedAttributes.width * 10 + sizeof(INT32);
-	int depPacketLen = depFeedAttributes.bytesPerPixel * depFeedAttributes.width + sizeof(short);
+	int depPacketLen = depFeedAttributes.bytesPerPixel * depFeedAttributes.width * 53 + sizeof(INT16);
 	BYTE *colPacket = new BYTE[colPacketLen];
 	BYTE *depPacket = new BYTE[depPacketLen];
 
@@ -82,38 +82,38 @@ void NetServer::run(NetServer *me){
 		me->camera->getColor(cFrame);
 		me->camera->getDepth(dFrame);
 		
-		/***send the data***/
+		//send the data
 		
 		if (debug) printf("sending color data.\n");
 
-		//Color
-		//create the packets and send them
-		for (int i = 0; i < 108; i++){
+		//Color (108 packets)
+		
+		for (INT32 i = 0; i < 108; i++){
 			memcpy(&colPacket[0], &i, sizeof(INT32)); //so each packet can be correctly placed in the scene
 			memcpy(&colPacket[sizeof(INT32)], cFrame->getBuffer() + (i * 10 * cFrame->getWidth()), colPacketLen);
-			bytesSent += sendto(cSock, (const char *)colPacket, colPacketLen, 0, (const sockaddr*)&cClient, sizeof(sockaddr));
+			errorCheck = sendto(cSock, (const char *)colPacket, colPacketLen, 0, (const sockaddr*)&cClient, sizeof(sockaddr));
+			while (errorCheck < 0){
+				errorCheck = sendto(cSock, (const char *)colPacket, colPacketLen, 0, (const sockaddr*)&cClient, sizeof(sockaddr));
+			}
+			bytesSent += errorCheck;
 		}
+				
 
 		if (debug) printf("sending depth frame.\n");
 
-		//Depth
-		int dBuffWid = depFeedAttributes.width * depFeedAttributes.bytesPerPixel; //in bytes
-		int dBuffHei = depFeedAttributes.height;
-		unsigned char *dBuffLoc = dFrame->getBuffer();
-
-		for (unsigned short i = 0; i < depFeedAttributes.height; i++){
-			//append the scanline index
-			depPacket[0] = (BYTE)((i & 0xFF00) >> 8);
-			depPacket[1] = (BYTE)(i & 0x00FF);
-
-			//Copy into the packet buffer
-			BYTE* scline = dBuffLoc + (i * dBuffWid);
-			memcpy(&depPacket[2], scline, dBuffWid);
-
-			//Bye!
-			bytesSent += sendto(dSock, (const char *)depPacket, depPacketLen, 0, (const sockaddr *)&dClient, sizeof(sockaddr));
+		//Depth (8 packets)
+		for (INT32 i = 0; i < 8; i++){
+			memcpy(&depPacket[0], &i, sizeof(INT32));
+			memcpy(&depPacket[sizeof(INT32)], dFrame->getBuffer() + (i * 53 * dFrame->getWidth()), depPacketLen);
+			errorCheck = sendto(dSock, (const char *)depPacket, depPacketLen, 0, (const sockaddr *)&dClient, sizeof(sockaddr));
+			while (errorCheck < 0){
+				errorCheck = sendto(dSock, (const char *)depPacket, depPacketLen, 0, (const sockaddr *)&dClient, sizeof(sockaddr));
+			}
+			bytesSent += errorCheck;
 		}
 
+		//TODO audio
+		//TODO skeleton
 		
 		//check for errors
 		if (bytesSent <= 0){
@@ -125,7 +125,7 @@ void NetServer::run(NetServer *me){
 		GetSystemTime(time);
 		endT = (time->wSecond * 1000) + time->wMilliseconds;
 		opTime = endT - startT;
-		printf("\r%i bytes sent in %i ms for %i bytes per ms.", bytesSent, opTime, bytesSent/opTime);
+		printf("\r%i frames %i bytes in %i ms: %i bytes / ms.", framesSent, bytesSent, opTime, bytesSent/opTime);
 		if (opTime < (long)delayTime){ 
 			//Sleep((long)delayTime - opTime);
 		}
@@ -168,12 +168,19 @@ int NetServer::initUDPSocket(SOCKET* s, sockaddr_in* sa){
 		return -1;
 	}
 
+	if (bind(*s, (const sockaddr *)sa, sizeof(sockaddr)));
+
 	//Set the socket as either blocking or nonblocking.
 	u_long enableBlocking = 0;
 	u_long enableNonBlocking = !enableBlocking;
-	int iResult = ioctlsocket(*s, FIONBIO, &enableBlocking);
+	int iResult = ioctlsocket(*s, FIONBIO, &enableNonBlocking);
 	if (iResult != NO_ERROR)
 		printf("ioctlsocket failed with error: %ld\n", iResult);
+
+	int sendBufferSize = 1920 * 1080 * 3 * 30 * 10;
+	if (0 != setsockopt(*s, SOL_SOCKET, SO_SNDBUF, (const char*)&sendBufferSize, sizeof(sendBufferSize))){
+		printf("cannot set UDP buffer to requested size: %i. Error code %i\n", sendBufferSize, WSAGetLastError());
+	}
 
 	//set the address the socket will send on
 	memset(sa, 0, sizeof(sockaddr_in));

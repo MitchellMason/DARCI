@@ -119,7 +119,7 @@ void Kinect2::getColor(videoFrame* vframe) {
 		hr = colReader->AcquireLatestFrame(&kColData);
 
 		//Ensure there were no errors
-		if (SUCCEEDED(hr) && kColData){//TODO revert
+		if (SUCCEEDED(hr) && kColData){
 			kColData->CopyConvertedFrameDataToArray(cByteBuffALen, cByteBuffA, ColorImageFormat_Bgra);
 		}
 		else{
@@ -146,11 +146,10 @@ void Kinect2::getColor(videoFrame* vframe) {
 	//remove the alpha
 	int cByteBuffNoALen = kColHeight * kColWidth * (kColBytesPerPix-1); //RGB only
 	BYTE *cByteBuffNoA = new BYTE[cByteBuffNoALen];
-	for (int i = 0, j = 0; i < cByteBuffALen; ){
-		cByteBuffNoA[j+0] = cByteBuffA[i+2];
-		cByteBuffNoA[j + 1] = cByteBuffA[i + 1];
+	for (int i = 0, j = 0; i < cByteBuffALen; j += 3){
 		cByteBuffNoA[j + 2] = cByteBuffA[i + 0];
-		j += 3;
+		cByteBuffNoA[j + 1] = cByteBuffA[i + 1];
+		cByteBuffNoA[j + 0] = cByteBuffA[i + 2];
 		i += 4;
 	}
 
@@ -173,29 +172,29 @@ void Kinect2::getDepth(videoFrame* dframe) {
 	BYTE *depByteBuff = new BYTE[totalPixels * sizeof(UINT16)];
 	if (kinectOpen && kinectReady){
 		//Get latest frame
-		depReader->AcquireLatestFrame(&kDepData);
-		if (kDepData){
-			kDepData->CopyFrameDataToArray(kDepHeight * kDepWidth, depBuff);
+		hr = depReader->AcquireLatestFrame(&kDepData);
+		if (SUCCEEDED(hr) && kDepData != NULL){
+			kDepData->CopyFrameDataToArray(totalPixels, depBuff);
 		}
-		else{
+		else if(hr == E_PENDING){
 			//Set to white while waiting for depth channel to spin up.
 			memset(depByteBuff, 0xFF, totalPixels * sizeof(UINT16));
 			totalPixels = 0;
 		}
+		else{
+			printf("Unknown error: %#x\n", hr);
+		}
 	}
 	else{
 		//Set to black to indicate a loss of the Kinect sensor.
-		memset(depBuff, 0, kDepHeight * kDepWidth);
+		memset(depBuff, 0xFF, kDepHeight * kDepWidth);
 		totalPixels = 0;
+		printf("no kinect sensor\n");
 	}
 	
-	UINT16 pix = 0;
-	for (short i = 0; i < totalPixels * sizeof(UINT16); i+=2){
-		pix = depByteBuff[i];
-		pix = pix << 8;
-		pix = pix | depByteBuff[i + 1];
-	}
+	memcpy(depByteBuff, depBuff, totalPixels * sizeof(UINT16));
 
+	if (kDepData) kDepData->Release();
 	dframe->copyBuffer(depByteBuff);
 	delete[] depBuff;
 	delete[] depByteBuff;
