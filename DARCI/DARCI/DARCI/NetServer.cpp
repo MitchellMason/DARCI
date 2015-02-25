@@ -177,7 +177,8 @@ int NetServer::initUDPSocket(SOCKET* s, sockaddr_in* sa){
 	if (iResult != NO_ERROR)
 		printf("ioctlsocket failed with error: %ld\n", iResult);
 
-	int sendBufferSize = 1920 * 1080 * 3 * 30 * 10;
+	//set the socket buffer size to 1 frame of content
+	int sendBufferSize = 1920 * 1080 * 3;
 	if (0 != setsockopt(*s, SOL_SOCKET, SO_SNDBUF, (const char*)&sendBufferSize, sizeof(sendBufferSize))){
 		printf("cannot set UDP buffer to requested size: %i. Error code %i\n", sendBufferSize, WSAGetLastError());
 	}

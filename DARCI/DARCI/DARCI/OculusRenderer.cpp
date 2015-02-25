@@ -1,19 +1,15 @@
 #include "OculusRenderer.h"
 
 
-OculusRenderer::OculusRenderer(netClientData *data)
-{
+OculusRenderer::OculusRenderer(netClientData *data){
+	this->app = new OVR_SDL2_app();
 	this->data = data;
-	window = SDL_CreateWindow("DARCI", 0, 0, 1920, 1080, SDL_WINDOWPOS_CENTERED);
-	surf = SDL_GetWindowSurface(window);
 }
 
 
-OculusRenderer::~OculusRenderer()
-{
+OculusRenderer::~OculusRenderer(){
 }
 
-void OculusRenderer::draw(){
-	memcpy(surf->pixels, data->colorBuff, data->cAttrib.bytesPerPixel * data->cAttrib.width *data->cAttrib.height);
-	SDL_UpdateWindowSurface(window);
+void OculusRenderer::run(){
+	this->app->run();
 }

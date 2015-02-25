@@ -36,6 +36,9 @@
     <ClInclude Include="OculusRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="OVR_SDL2_app.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DARCI.cpp">
@@ -57,6 +60,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="OculusRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OVR_SDL2_app.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

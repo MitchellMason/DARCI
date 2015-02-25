@@ -51,15 +51,15 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>C:\Users\Mitchell-Thesis\Documents\vlc-2.0\include;C:\Program Files\SDL2-2.0.3\include;C:\Program Files\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Mitchell-Thesis\Documents\Libraries\OculusSDK\LibOVR\Src;C:\Users\Mitchell-Thesis\Documents\Libraries\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\inc;C:\Users\Mitchell-Thesis\Documents\Libraries\OculusSDK\LibOVR\Include;C:\Users\Mitchell-Thesis\Documents\Libraries\glew-1.12.0\include;C:\Users\Mitchell-Thesis\Documents\Libraries\SDL2-2.0.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\Mitchell-Thesis\Documents\vlc-2.0\lib;C:\Program Files\SDL2-2.0.3\VisualC\SDL\Win32\Debug;C:\Program Files\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\Lib\x86;C:\Program Files\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\Lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Kinect20.lib;SDL2.lib;libvlc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Users\Mitchell-Thesis\Documents\Libraries\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\Lib\x86;C:\Users\Mitchell-Thesis\Documents\Libraries\SDL2-2.0.3\VisualC\SDLmain\Win32\Debug;C:\Users\Mitchell-Thesis\Documents\Libraries\SDL2-2.0.3\VisualC\SDL\Win32\Debug;C:\Users\Mitchell-Thesis\Documents\Libraries\glew-1.12.0\lib\Debug\Win32;C:\Users\Mitchell-Thesis\Documents\Libraries\OculusSDK\LibOVR\Lib\Win32\VS2013;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Kinect20.lib;SDL2.lib;SDL2main.lib;libovr.lib;glew32d.lib;ws2_32.lib;opengl32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
@@ -71,7 +71,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
@@ -89,6 +89,7 @@
     <ClInclude Include="NetClient.h" />
     <ClInclude Include="NetServer.h" />
     <ClInclude Include="OculusRenderer.h" />
+    <ClInclude Include="OVR_SDL2_app.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DARCI.cpp" />
@@ -98,6 +99,7 @@
     <ClCompile Include="NetClient.cpp" />
     <ClCompile Include="NetServer.cpp" />
     <ClCompile Include="OculusRenderer.cpp" />
+    <ClCompile Include="OVR_SDL2_app.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

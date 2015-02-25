@@ -43,7 +43,8 @@ void init(){
 
 	//start the renderer
 	printf("-Starting renderer.\n");
-	//renderer = new OculusRenderer(ncData);
+	renderer = new OculusRenderer(ncData);
+	renderer->run();
 }
 
 //Runs forever while application is active
