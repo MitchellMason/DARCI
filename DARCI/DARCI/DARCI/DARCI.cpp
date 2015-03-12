@@ -28,7 +28,7 @@ void init(){
 	camera->start();
 
 	//start the server
-	const char* remAddr = "169.254.212.163";
+	const char* remAddr = "127.0.0.1";
 	printf("-Creating server.\n");
 	server = new NetServer(remAddr, basePort, camera);
 	printf("--hosting to %s\n",remAddr);
@@ -39,7 +39,7 @@ void init(){
 	client = new NetClient(basePort);
 	ncData = new netClientData;
 
-	//client->start(ncData);
+	client->start(ncData);
 
 	//start the renderer
 	printf("-Starting renderer.\n");
@@ -49,8 +49,6 @@ void init(){
 
 //Runs forever while application is active
 void loop(){
-	//Get and handle sdl events TODO
-	//renderer->draw();
 	Sleep(32);
 }
 

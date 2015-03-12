@@ -1,4 +1,4 @@
-﻿Build started 2/24/2015 1:56:23 PM.
+﻿Build started 3/5/2015 12:09:28 AM.
      1>Project "C:\Users\Mitchell-Thesis\Documents\DARCI\DARCI\DARCI\DARCI\DARCI.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I"C:\Users\Mitchell-Thesis\Documents\Libraries\OculusSDK\LibOVR\Src" /I"C:\Users\Mitchell-Thesis\Documents\Libraries\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\inc" /I"C:\Users\Mitchell-Thesis\Documents\Libraries\OculusSDK\LibOVR\Include" /I"C:\Users\Mitchell-Thesis\Documents\Libraries\glew-1.12.0\include" /I"C:\Users\Mitchell-Thesis\Documents\Libraries\SDL2-2.0.3\include" /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _CRT_SECURE_NO_WARNINGS /D _DEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt DARCI.cpp
@@ -12,6 +12,7 @@
          Debug\NetServer.obj
          Debug\OculusRenderer.obj
          Debug\OVR_SDL2_app.obj
+         Debug\OVR_SDL2_nav.obj
      1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/PROFILE' specification
      1>DARCI.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/OPT:LBR' specification
          DARCI.vcxproj -> C:\Users\Mitchell-Thesis\Documents\DARCI\DARCI\DARCI\Debug\DARCI.exe
@@ -19,4 +20,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.13
+Time Elapsed 00:00:01.15

@@ -90,6 +90,7 @@
     <ClInclude Include="NetServer.h" />
     <ClInclude Include="OculusRenderer.h" />
     <ClInclude Include="OVR_SDL2_app.hpp" />
+    <ClInclude Include="OVR_SDL2_nav.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DARCI.cpp" />
@@ -100,6 +101,7 @@
     <ClCompile Include="NetServer.cpp" />
     <ClCompile Include="OculusRenderer.cpp" />
     <ClCompile Include="OVR_SDL2_app.cpp" />
+    <ClCompile Include="OVR_SDL2_nav.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
