@@ -17,7 +17,7 @@ int basePort = 9000; //the port all data communication begins at
 NetServer *server;
 NetClient *client;
 InputDevice *camera;
-netClientData *ncData; //The data passed to the rendering object
+netClientData *data; //The data passed to the rendering object
 OculusRenderer *renderer;
 
 //Runs once at the beginning of the execution
@@ -37,14 +37,33 @@ void init(){
 	//start the client
 	printf("-Starting client.\n");
 	client = new NetClient(basePort);
-	ncData = new netClientData;
+	data = new netClientData;
 
-	client->start(ncData);
+	//initialize the data holder
+	data->colorLock = true;
+	data->cAttrib = *new videoAttributes;
+	data->cAttrib.bytesPerPixel = 3;
+	data->cAttrib.height = 1080; //TODO properly get this data
+	data->cAttrib.width = 1920;
+
+	data->colorBuff = new BYTE[1080 * 1920 * 3];
+	data->colorLock = false;
+
+	data->depthLock = true;
+	data->dAttrib = *new videoAttributes;
+	data->dAttrib.bytesPerPixel = 2;
+	data->dAttrib.height = 512; //TODO properly get this data
+	data->dAttrib.width = 424;
+
+	data->depthBuff = new BYTE[512 * 424 * 2];
+	data->depthLock = false;
+
+	//client->start(data);
 
 	//start the renderer
-	printf("-Starting renderer.\n");
-	renderer = new OculusRenderer(ncData);
-	renderer->run();
+	//printf("-Starting renderer.\n");
+	//renderer = new OculusRenderer(data);
+	//renderer->run();
 }
 
 //Runs forever while application is active

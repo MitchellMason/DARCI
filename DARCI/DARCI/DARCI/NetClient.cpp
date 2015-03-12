@@ -44,23 +44,6 @@ void NetClient::start(netClientData *data){
 
 //Gets new information from the socket and updates the nessary data
 void NetClient::run(NetClient *me, netClientData *data){
-	data->colorLock = true;
-	data->cAttrib = *new videoAttributes;
-	data->cAttrib.bytesPerPixel = 3;
-	data->cAttrib.height = 1080; //TODO properly get this data
-	data->cAttrib.width = 1920;
-	
-	data->colorBuff = new BYTE[1080 * 1920 * 3];
-	data->colorLock = false;
-
-	data->depthLock = true;
-	data->dAttrib = *new videoAttributes;
-	data->dAttrib.bytesPerPixel = 2;
-	data->dAttrib.height = 512; //TODO properly get this data
-	data->dAttrib.width = 424;
-
-	data->depthBuff = new BYTE[512 * 424 * 2];
-	data->depthLock = false;
 	
 	timeval *timeout = new timeval;
 	timeout->tv_sec = 0;
