@@ -13,7 +13,6 @@ public:
 
 protected:
 
-	virtual void step();
 	virtual void draw();
 
 private:
@@ -23,10 +22,23 @@ private:
 	
 	SDL_Window *window;
 	SDL_Surface *surf;
+	SDL_Event event;
 	netClientData *data;
-	const int POLYCOUNT = 1920 * 1080;
+	const int MESH_WIDTH = 512;
+	const int MESH_HEIGHT = 424;
 
 	//GL vars
 	GLuint program;
+	GLuint vertexArray;
+
+	GLuint vertexBuffer;
+	GLuint triarrBuffer;
+	
+	mat4 modelView;
+	mat4 Projection;
+	
+	GLint ProjectionMatrixLoc;
+	GLint ModelMatrixLoc;
+	GLint ViewMatrixLoc;
 };
 

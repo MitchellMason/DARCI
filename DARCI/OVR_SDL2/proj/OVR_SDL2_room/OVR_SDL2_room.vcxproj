@@ -63,9 +63,9 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;libovr64d.lib;glew32sd.lib;opengl32.lib;ws2_32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;libovr64d.lib;libovr.lib;glew32sd.lib;opengl32.lib;ws2_32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib;msvcrtd.lib</IgnoreSpecificDefaultLibraries>
-      <AdditionalLibraryDirectories>C:\Users\Mitchell-Thesis\Documents\Libraries\glew-1.12.0\lib\Debug\Win32;C:\Users\Mitchell-Thesis\Documents\Libraries\OculusSDK\LibOVR\Lib\x64\VS2013;C:\Users\Mitchell-Thesis\Documents\Libraries\SDL2-2.0.3\VisualC\SDLmain\Win32\Debug\;C:\Users\Mitchell-Thesis\Documents\Libraries\SDL2-2.0.3\VisualC\SDL\Win32\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\Mitchell-Thesis\Documents\Libraries\OculusSDK\LibOVR\Lib\Win32\VS2013;C:\Users\Mitchell-Thesis\Documents\Libraries\glew-1.12.0\lib\Debug\Win32;C:\Users\Mitchell-Thesis\Documents\Libraries\OculusSDK\LibOVR\Lib\x64\VS2013;C:\Users\Mitchell-Thesis\Documents\Libraries\SDL2-2.0.3\VisualC\SDLmain\Win32\Debug\;C:\Users\Mitchell-Thesis\Documents\Libraries\SDL2-2.0.3\VisualC\SDL\Win32\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

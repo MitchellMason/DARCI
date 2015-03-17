@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include "SDL.h"
 
+SDL_Event *event;
 bool appIsRunning = true;
 int basePort = 9000; //the port all data communication begins at
 NetServer *server;
@@ -37,38 +38,43 @@ void init(){
 	//start the client
 	printf("-Starting client.\n");
 	client = new NetClient(basePort);
-	data = new netClientData;
+	data = new netClientData();
 
 	//initialize the data holder
 	data->colorLock = true;
 	data->cAttrib = *new videoAttributes;
 	data->cAttrib.bytesPerPixel = 3;
-	data->cAttrib.height = 1080; //TODO properly get this data
-	data->cAttrib.width = 1920;
+	data->cAttrib.height = camera->getColSpecs().height; 
+	data->cAttrib.width = camera->getColSpecs().width;
 
-	data->colorBuff = new BYTE[1080 * 1920 * 3];
+	data->colorBuff = new BYTE[data->cAttrib.height * data->cAttrib.width * data->cAttrib.bytesPerPixel];
 	data->colorLock = false;
 
 	data->depthLock = true;
 	data->dAttrib = *new videoAttributes;
 	data->dAttrib.bytesPerPixel = 2;
-	data->dAttrib.height = 512; //TODO properly get this data
-	data->dAttrib.width = 424;
+	data->dAttrib.height = camera->getDepSpecs().height;
+	data->dAttrib.width = camera->getDepSpecs().width;
 
-	data->depthBuff = new BYTE[512 * 424 * 2];
+	data->depthBuff = new BYTE[data->dAttrib.height * data->dAttrib.width * data->dAttrib.bytesPerPixel];
 	data->depthLock = false;
 
 	//client->start(data);
 
 	//start the renderer
-	//printf("-Starting renderer.\n");
-	//renderer = new OculusRenderer(data);
-	//renderer->run();
+	printf("-Starting renderer.\n");
+	renderer = new OculusRenderer(data);
+	renderer->run();
 }
 
 //Runs forever while application is active
 void loop(){
+	//wait to join the active threads
 	Sleep(32);
+	SDL_PollEvent(event);
+	if (event != NULL && event->type == SDL_QUIT){
+		appIsRunning = false;
+	}
 }
 
 //Entry point for application. 
@@ -80,6 +86,7 @@ int wmain(int argc, char **argv[]){
 	while (appIsRunning){
 		loop();
 	}
+	printf("----------------------Closing----------------------\n");
 	delete server;
 	delete client;
 	delete renderer;

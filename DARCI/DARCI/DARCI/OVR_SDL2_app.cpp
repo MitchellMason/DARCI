@@ -81,7 +81,6 @@ bool OVR_SDL2_app::init_SDL(int x, int y, int w, int h)
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
         // Create the window and initialize the OpenGL context.
-
         if ((window = SDL_CreateWindow("OVR_SDL2", x, y, w, h, f)))
         {
             context = SDL_GL_CreateContext(window);
@@ -111,8 +110,10 @@ bool OVR_SDL2_app::init_OVR()
 
     // Fall back on a DK1 debug configuration if no HMD is available.
 
-    if (hmd == 0)
-        hmd = ovrHmd_CreateDebug(ovrHmd_DK1);
+	if (hmd == 0){
+		hmd = ovrHmd_CreateDebug(ovrHmd_DK1);
+		printf("No HMD found\n");
+	}
 
     // Enable all tracking capabilities on this HMD.
 
