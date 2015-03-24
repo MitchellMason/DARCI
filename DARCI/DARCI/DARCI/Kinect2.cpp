@@ -155,7 +155,7 @@ void Kinect2::getColor(videoFrame* vframe) {
 
 	//copy the buffer and polish up
 	vframe->copyBuffer(cByteBuffNoA);
-	if (kColData)
+	if (kColData != NULL)
 		kColData->Release();
 	delete[] cByteBuffA;
 	delete[] cByteBuffNoA;

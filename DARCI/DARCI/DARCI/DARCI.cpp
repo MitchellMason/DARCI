@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include "SDL.h"
 
-SDL_Event *event;
+SDL_Event event;
 bool appIsRunning = true;
 int basePort = 9000; //the port all data communication begins at
 NetServer *server;
@@ -41,16 +41,14 @@ void init(){
 	data = new netClientData();
 
 	//initialize the data holder
-	data->colorLock = true;
+	data->colorLock = false;
 	data->cAttrib = *new videoAttributes;
 	data->cAttrib.bytesPerPixel = 3;
 	data->cAttrib.height = camera->getColSpecs().height; 
 	data->cAttrib.width = camera->getColSpecs().width;
-
 	data->colorBuff = new BYTE[data->cAttrib.height * data->cAttrib.width * data->cAttrib.bytesPerPixel];
-	data->colorLock = false;
 
-	data->depthLock = true;
+	data->depthLock = false;
 	data->dAttrib = *new videoAttributes;
 	data->dAttrib.bytesPerPixel = 2;
 	data->dAttrib.height = camera->getDepSpecs().height;
@@ -59,7 +57,8 @@ void init(){
 	data->depthBuff = new BYTE[data->dAttrib.height * data->dAttrib.width * data->dAttrib.bytesPerPixel];
 	data->depthLock = false;
 
-	//client->start(data);
+	//start receiving data
+	client->start(data);
 
 	//start the renderer
 	printf("-Starting renderer.\n");
@@ -71,8 +70,8 @@ void init(){
 void loop(){
 	//wait to join the active threads
 	Sleep(32);
-	SDL_PollEvent(event);
-	if (event != NULL && event->type == SDL_QUIT){
+	SDL_PollEvent(&event);
+	if (event.type == SDL_QUIT){
 		appIsRunning = false;
 	}
 }
@@ -83,7 +82,7 @@ int wmain(int argc, char **argv[]){
 	printf("-------------Written by Mitchell Mason-------------\n\n");
 	init();
 	printf("-Done with init.\n");
-	while (appIsRunning){
+	while (appIsRunning && renderer->isRunning()){
 		loop();
 	}
 	printf("----------------------Closing----------------------\n");

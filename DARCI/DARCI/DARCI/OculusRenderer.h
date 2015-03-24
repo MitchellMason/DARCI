@@ -11,6 +11,8 @@ public:
 	OculusRenderer(netClientData *data);
 	~OculusRenderer();
 
+	bool isRunning();
+
 protected:
 
 	virtual void draw();
@@ -18,14 +20,14 @@ protected:
 private:
 
 	float map(float val, float inStart, float inStop, float outStart, float outStop);
-	void makeMesh();
+	void init();
 	
 	SDL_Window *window;
 	SDL_Surface *surf;
 	SDL_Event event;
 	netClientData *data;
 	const int MESH_WIDTH = 512;
-	const int MESH_HEIGHT = 424;
+	const int MESH_HEIGHT  = 424;
 
 	//GL vars
 	GLuint program;
@@ -40,5 +42,7 @@ private:
 	GLint ProjectionMatrixLoc;
 	GLint ModelMatrixLoc;
 	GLint ViewMatrixLoc;
+	GLint TextureLoc;
+	GLint DepthMapLoc;
 };
 

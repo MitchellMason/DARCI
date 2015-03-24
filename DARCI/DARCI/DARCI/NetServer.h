@@ -27,6 +27,7 @@ private:
 	
 	//The thread the server runs on
 	std::thread *thread;
+	bool threadRunning = true;
 	
 	//Socket data
 	int *port;

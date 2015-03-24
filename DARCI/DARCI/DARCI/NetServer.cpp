@@ -24,10 +24,10 @@ NetServer::NetServer(std::string remAddr, int basePort, InputDevice *cam)
 
 NetServer::~NetServer()
 {
+	this->threadRunning = false;
+	this->thread->join();
 	delete camera;
 	delete thread;
-	delete port;
-	delete addr;
 }
 
 //Spawns a new thread that calls run until the application is closed
@@ -36,7 +36,6 @@ void NetServer::start(){
 }
 
 void NetServer::run(NetServer *me){
-	bool threadRunning = true;
 	const float delayTime = (1.0f / 30.0f) * 1000.0f; //30 updates per second
 	
 	SYSTEMTIME *time = new SYSTEMTIME;
@@ -68,7 +67,7 @@ void NetServer::run(NetServer *me){
 	BYTE *colPacket = new BYTE[colPacketLen];
 	BYTE *depPacket = new BYTE[depPacketLen];
 
-	while (threadRunning){
+	while (me->threadRunning){
 		framesSent++;
 		bytesSent = 0;
 		
@@ -118,7 +117,7 @@ void NetServer::run(NetServer *me){
 		//check for errors
 		if (bytesSent <= 0){
 			printf("Error occured on server with code %i\n", WSAGetLastError());
-			threadRunning = false;
+			me->threadRunning = false;
 		}
 
 		//mark the end of the transfer. Ensure the server isn't struggling to send all the messages.
@@ -134,10 +133,6 @@ void NetServer::run(NetServer *me){
 		}
 	}
 
-	delete[] colPacket;
-	delete[] depPacket;
-	delete cFrame;
-	delete dFrame;
 	printf("Server no longer running.\n");
 }
 
