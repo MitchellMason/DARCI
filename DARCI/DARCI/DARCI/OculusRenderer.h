@@ -35,14 +35,22 @@ private:
 
 	GLuint vertexBuffer;
 	GLuint triarrBuffer;
+	GLuint texCoordBuffer;
+
+	GLuint depthTexture;
+	GLuint colorTexture;
 	
 	mat4 modelView;
 	mat4 Projection;
-	
-	GLint ProjectionMatrixLoc;
+
+	GLint vTexCoord;
+	GLint vPositionLoc;
+	GLint vTexCoordLoc;
+
 	GLint ModelMatrixLoc;
 	GLint ViewMatrixLoc;
-	GLint TextureLoc;
+	GLint ProjectionMatrixLoc;
+	GLint ColorMapLoc;
 	GLint DepthMapLoc;
 };
 

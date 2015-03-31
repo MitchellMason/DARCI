@@ -132,8 +132,6 @@ void NetServer::run(NetServer *me){
 			//printf("\nWARNING: SERVER IS NOT SENDING CONTENT ON TIME: %i ms.\n",opTime); 
 		}
 	}
-
-	printf("Server no longer running.\n");
 }
 
 //initialize and bind the sockets, as well as the addresses

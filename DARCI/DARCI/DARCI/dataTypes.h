@@ -12,10 +12,8 @@ typedef struct {
 } videoAttributes;
 
 typedef struct {
-	bool colorLock;
 	unsigned char *colorBuff;
 	videoAttributes cAttrib;
-	bool depthLock;
 	unsigned char *depthBuff;
 	videoAttributes dAttrib;
 } netClientData;

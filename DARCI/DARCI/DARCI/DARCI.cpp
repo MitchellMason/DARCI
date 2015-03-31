@@ -10,10 +10,10 @@
 #include "OculusRenderer.h"
 #include <iostream>
 #include <stdio.h>
+#include <limits>
 #include "SDL.h"
 
 SDL_Event event;
-bool appIsRunning = true;
 int basePort = 9000; //the port all data communication begins at
 NetServer *server;
 NetClient *client;
@@ -41,21 +41,18 @@ void init(){
 	data = new netClientData();
 
 	//initialize the data holder
-	data->colorLock = false;
 	data->cAttrib = *new videoAttributes;
 	data->cAttrib.bytesPerPixel = 3;
 	data->cAttrib.height = camera->getColSpecs().height; 
 	data->cAttrib.width = camera->getColSpecs().width;
 	data->colorBuff = new BYTE[data->cAttrib.height * data->cAttrib.width * data->cAttrib.bytesPerPixel];
 
-	data->depthLock = false;
 	data->dAttrib = *new videoAttributes;
 	data->dAttrib.bytesPerPixel = 2;
 	data->dAttrib.height = camera->getDepSpecs().height;
 	data->dAttrib.width = camera->getDepSpecs().width;
 
 	data->depthBuff = new BYTE[data->dAttrib.height * data->dAttrib.width * data->dAttrib.bytesPerPixel];
-	data->depthLock = false;
 
 	//start receiving data
 	client->start(data);
@@ -70,10 +67,6 @@ void init(){
 void loop(){
 	//wait to join the active threads
 	Sleep(32);
-	SDL_PollEvent(&event);
-	if (event.type == SDL_QUIT){
-		appIsRunning = false;
-	}
 }
 
 //Entry point for application. 
@@ -81,13 +74,14 @@ int wmain(int argc, char **argv[]){
 	printf("-----------------Welcome to DARCI------------------\n");
 	printf("-------------Written by Mitchell Mason-------------\n\n");
 	init();
-	printf("-Done with init.\n");
-	while (appIsRunning && renderer->isRunning()){
+	while (renderer->isRunning()){
 		loop();
 	}
-	printf("----------------------Closing----------------------\n");
 	delete server;
 	delete client;
 	delete renderer;
+	printf("\n----------------------Closing----------------------\n");
+	printf("Press return to exit");
+	std::cin.ignore(2, '\n'); //just wait for the user to finish reading
 	return 0;
 }

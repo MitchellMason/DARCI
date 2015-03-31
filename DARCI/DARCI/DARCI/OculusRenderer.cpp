@@ -6,28 +6,32 @@ static const char *vshader = R"(
 	uniform mat4 model;
 	uniform mat4 view;
 	uniform mat4 proj;
+	uniform sampler2D depthTex;
 	
 	in vec4 vPosition;
-	in vec2 vertexTexCoord;
-	in int depthMap;
-	out int depth;
+	in vec2 vTexCoord;
+
+	out float depth;
 
 	void main(){
-		depth = depthMap;
-		gl_Position = proj * view * model * vPosition;
-		gl_Position.z = depthMap * 100;
+		vec4 displacedvPosition = vPosition;
+		displacedvPosition.z = texture2D(depthTex, vTexCoord).r * 6.0;
+		gl_Position = proj * view * model * displacedvPosition;
+		depth = displacedvPosition.z;
 	}
 )";
 
 static const char *fshader = R"(
 	#version 150
 	
-	uniform isampler2D colorTexture;
+	in float depth;
+
+	//uniform sampler2D colorTexture;
 
 	out vec4 fOutput;
 
 	void main(){
-		fOutput = vec4(depth,0.0,0.0,1.0);
+		fOutput = vec4(depth, 0.0, 0.0, 1.0);
 	}
 )";
 
@@ -42,13 +46,15 @@ OculusRenderer::OculusRenderer(netClientData *data){
 		init();
 
 		//get attribute pointers and assign them
-		GLuint vPosLoc = glGetAttribLocation(program, (const GLchar *) "vPosition");
-		glVertexAttribPointer(vPosLoc, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-		glEnableVertexAttribArray(vPosLoc);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+		vPositionLoc = glGetAttribLocation(program, (const GLchar *) "vPosition");
+		glVertexAttribPointer(vPositionLoc, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		glEnableVertexAttribArray(vPositionLoc);
 
-		GLuint vertexTexCoordLoc = glGetAttribLocation(program, (const GLchar *) "vertexTexCoord");
-		glVertexAttribPointer(vertexTexCoordLoc, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-		glEnableVertexAttribArray(vertexTexCoordLoc);
+		glBindBuffer(GL_ARRAY_BUFFER, texCoordBuffer);
+		vTexCoordLoc = glGetAttribLocation(program, (const GLchar *) "vTexCoord");
+		glVertexAttribPointer(vTexCoordLoc, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+		glEnableVertexAttribArray(vTexCoordLoc);
 		
 		//clear the screen
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -58,10 +64,10 @@ OculusRenderer::OculusRenderer(netClientData *data){
 
 		//get the positions of shader data
 		ModelMatrixLoc =      glGetUniformLocation(program, "model");
-		ProjectionMatrixLoc = glGetUniformLocation(program, "proj");
 		ViewMatrixLoc =       glGetUniformLocation(program, "view");
-		TextureLoc =          glGetUniformLocation(program, "colorTexture");
-		DepthMapLoc =		  glGetUniformLocation(program, "depthMap");
+		ProjectionMatrixLoc = glGetUniformLocation(program, "proj");
+		ColorMapLoc =         glGetUniformLocation(program, "colorTexture");
+		DepthMapLoc =		  glGetUniformLocation(program, "depthTex");
 	}
 	else{
 		printf("Could not create opengl program.\n");
@@ -88,7 +94,7 @@ void OculusRenderer::init(){
 	int c = 0; //z-index
 
 	for (int i = 0; i < verticesLen; i += 3) {
-		vertices[i + 0] = map(c, 0, MESH_WIDTH  - 1, -1.0, 1.0); //x
+		vertices[i + 0] = map(c, 0, MESH_WIDTH - 1, -1.0, 1.0); //x
 		vertices[i + 1] = map(r, 0, MESH_HEIGHT - 1, -1.0, 1.0); //y
 		vertices[i + 2] = 0.0f; //z, replaced by depth map
 
@@ -97,6 +103,17 @@ void OculusRenderer::init(){
 		if (c == MESH_WIDTH) {
 			r++;
 			c = 0;
+		}
+	}
+
+	int texCoordLen = MESH_HEIGHT * MESH_WIDTH * 2;
+	float *texCoords = new float[texCoordLen];
+	for (int i = 0, r = 0, c = 0; i < texCoordLen; i += 2, c++){
+		texCoords[i + 0] = map(c, 0, MESH_WIDTH, 0, 1);
+		texCoords[i + 1] = map(r, 0, MESH_HEIGHT, 0, 1);
+		if (c == MESH_WIDTH){
+			c = 0;
+			r++;
 		}
 	}
 
@@ -130,8 +147,24 @@ void OculusRenderer::init(){
 	glBindVertexArray(vertexArray);
 	glGenBuffers((GLsizei)1, &vertexBuffer);
 	glGenBuffers((GLsizei)1, &triarrBuffer);
+	glGenBuffers((GLsizei)1, &texCoordBuffer);
 	
+	glGenTextures((GLsizei)1, &depthTexture);
+	glBindTexture(GL_TEXTURE_2D, depthTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	
+	glGenTextures((GLsizei)1, &colorTexture);
+	glBindTexture(GL_TEXTURE_2D, colorTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
 	//bind the buffers and load the data
+	
+	glBindBuffer(GL_ARRAY_BUFFER, texCoordBuffer);
+	glBufferData(GL_ARRAY_BUFFER, texCoordLen * sizeof(float), texCoords, GL_STATIC_DRAW);
+
 	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
 	glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)verticesLen * sizeof(float), (const void *)vertices, GL_STATIC_DRAW);
 
@@ -140,6 +173,7 @@ void OculusRenderer::init(){
 
 	/*clean up*/
 	delete[] vertices;
+	delete[] texCoords;
 	delete[] tris;
 
 	/*Establish texture buffers*/
@@ -154,20 +188,33 @@ float OculusRenderer::map(float val, float inStart, float inStop, float outStart
 //draw logic here
 void OculusRenderer::draw(){
 	
-	//send the color texture
-	while (data->colorLock == true){ /* wait on lock */ }
-	data->colorLock = true;
-		//TODO buffer color data here
-	data->colorLock = false;
+	//bind the color texture
+	glBindTexture(GL_TEXTURE_2D, colorTexture);
+	glTexImage2D(
+		GL_TEXTURE_2D,			//target
+		(GLint)0,				//level
+		GL_RGB,					//internalformat
+		(GLsizei)MESH_WIDTH,	//width
+		(GLsizei)MESH_HEIGHT,	//height
+		(GLint)0,				//border
+		GL_RGB,					//format
+		GL_INT8_VEC3_NV,		//type
+		data->colorBuff			//pixels 
+		);
 	
-	//send the depth map
-	while (data->depthLock == true){ /* wait on lock */ }
-	data->depthLock = true;
-		//TODO buffer depth data here
-	glBindBuffer(GL_UNSIGNED_SHORT, DepthMapLoc);
-	glBufferData(GL_UNSIGNED_SHORT, (GLsizeiptr)data->dAttrib.bytesPerPixel, data->depthBuff, GL_STATIC_DRAW);
-	data->depthLock = false;
-	
+	//send the depth map TODO mutex for the textures
+	glBindTexture(GL_TEXTURE_2D, depthTexture);
+	glTexImage2D(
+		GL_TEXTURE_2D,			//target
+		(GLint)0,				//level
+		GL_RED,					//internalformat
+		(GLsizei)MESH_WIDTH,	//width
+		(GLsizei)MESH_HEIGHT,	//height
+		(GLint)0,				//border
+		GL_RED,					//format
+		GL_UNSIGNED_SHORT,		//type
+		data->depthBuff			//pixels 
+		);	
 
 	//Clear the buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

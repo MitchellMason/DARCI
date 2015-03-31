@@ -72,16 +72,10 @@ void NetClient::run(NetClient *me, netClientData *data){
 
 		//read whatever data is ready
 		if (FD_ISSET(*cSock, socks)){
-			while (data->colorLock){ /* wait on lock */ }
-			data->colorLock = true;
 			recv(*cSock, (char *)data->colorBuff, 1920 * 1080 * 3, 0);
-			data->colorLock = false;
 		}
 		if (FD_ISSET(*dSock, socks)){
-			while (data->depthLock){ /* wait on lock */ }
-			data->depthLock = true;
 			recv(*dSock, (char *)data->depthBuff, 512 * 424 * 2, 0);
-			data->depthLock = false;
 		}
 	}
 	delete[] recvBuff;
