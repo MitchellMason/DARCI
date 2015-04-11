@@ -11,27 +11,28 @@ static const char *vshader = R"(
 	in vec4 vPosition;
 	in vec2 vTexCoord;
 
-	out float depth;
+	out vec2 fTexCoord;
 
 	void main(){
+		fTexCoord = vTexCoord;
 		vec4 displacedvPosition = vPosition;
-		displacedvPosition.z = texture2D(depthTex, vTexCoord).r * 6.0;
+		displacedvPosition.z = texture2D(depthTex, vTexCoord).r * 2.0;
 		gl_Position = proj * view * model * displacedvPosition;
-		depth = displacedvPosition.z;
 	}
 )";
 
 static const char *fshader = R"(
 	#version 150
 	
-	in float depth;
+	in vec2 fTexCoord;
 
-	//uniform sampler2D colorTexture;
+	uniform sampler2D colorTex;
 
 	out vec4 fOutput;
 
 	void main(){
-		fOutput = vec4(depth, 0.0, 0.0, 1.0);
+		vec4 colorMap = texture2D(colorTex, fTexCoord);
+		fOutput = vec4(colorMap.r, colorMap.g, colorMap.b, 1.0);
 	}
 )";
 
@@ -66,8 +67,19 @@ OculusRenderer::OculusRenderer(netClientData *data){
 		ModelMatrixLoc =      glGetUniformLocation(program, "model");
 		ViewMatrixLoc =       glGetUniformLocation(program, "view");
 		ProjectionMatrixLoc = glGetUniformLocation(program, "proj");
-		ColorMapLoc =         glGetUniformLocation(program, "colorTexture");
+		ColorMapLoc =         glGetUniformLocation(program, "colorTex");
 		DepthMapLoc =		  glGetUniformLocation(program, "depthTex");
+
+		//initialize textures
+		glGenTextures((GLsizei)1, &depthTexture);
+		glBindTexture(GL_TEXTURE_2D, depthTexture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		glGenTextures((GLsizei)1, &colorTexture);
+		glBindTexture(GL_TEXTURE_2D, colorTexture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
 	else{
 		printf("Could not create opengl program.\n");
@@ -106,11 +118,12 @@ void OculusRenderer::init(){
 		}
 	}
 
+	//UV coordinates
 	int texCoordLen = MESH_HEIGHT * MESH_WIDTH * 2;
 	float *texCoords = new float[texCoordLen];
 	for (int i = 0, r = 0, c = 0; i < texCoordLen; i += 2, c++){
-		texCoords[i + 0] = map(c, 0, MESH_WIDTH, 0, 1);
-		texCoords[i + 1] = map(r, 0, MESH_HEIGHT, 0, 1);
+		texCoords[i + 0] = map(c, 0, MESH_WIDTH,  1, 0);
+		texCoords[i + 1] = map(r, 0, MESH_HEIGHT, 1, 0);
 		if (c == MESH_WIDTH){
 			c = 0;
 			r++;
@@ -148,16 +161,6 @@ void OculusRenderer::init(){
 	glGenBuffers((GLsizei)1, &vertexBuffer);
 	glGenBuffers((GLsizei)1, &triarrBuffer);
 	glGenBuffers((GLsizei)1, &texCoordBuffer);
-	
-	glGenTextures((GLsizei)1, &depthTexture);
-	glBindTexture(GL_TEXTURE_2D, depthTexture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	
-	glGenTextures((GLsizei)1, &colorTexture);
-	glBindTexture(GL_TEXTURE_2D, colorTexture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 
 	//bind the buffers and load the data
@@ -187,39 +190,45 @@ float OculusRenderer::map(float val, float inStart, float inStop, float outStart
 
 //draw logic here
 void OculusRenderer::draw(){
-	
-	//bind the color texture
-	glBindTexture(GL_TEXTURE_2D, colorTexture);
-	glTexImage2D(
-		GL_TEXTURE_2D,			//target
-		(GLint)0,				//level
-		GL_RGB,					//internalformat
-		(GLsizei)MESH_WIDTH,	//width
-		(GLsizei)MESH_HEIGHT,	//height
-		(GLint)0,				//border
-		GL_RGB,					//format
-		GL_INT8_VEC3_NV,		//type
-		data->colorBuff			//pixels 
-		);
-	
-	//send the depth map TODO mutex for the textures
-	glBindTexture(GL_TEXTURE_2D, depthTexture);
-	glTexImage2D(
-		GL_TEXTURE_2D,			//target
-		(GLint)0,				//level
-		GL_RED,					//internalformat
-		(GLsizei)MESH_WIDTH,	//width
-		(GLsizei)MESH_HEIGHT,	//height
-		(GLint)0,				//border
-		GL_RED,					//format
-		GL_UNSIGNED_SHORT,		//type
-		data->depthBuff			//pixels 
-		);	
-
 	//Clear the buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(program);
 	glBindVertexArray(vertexArray);
+
+	//update the textures
+	glUniform1i(ColorMapLoc, 0);
+	glUniform1i(DepthMapLoc, 1);
+
+	//color
+	glActiveTexture(GL_TEXTURE0);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, colorTexture);
+	glTexImage2D(
+		GL_TEXTURE_2D,					//target
+		(GLint)0,						//level
+		GL_RGB,							//internalformat
+		(GLsizei)data->cAttrib.width,	//width
+		(GLsizei)data->cAttrib.height,	//height
+		(GLint)0,						//border
+		GL_RGB,							//format
+		GL_UNSIGNED_BYTE,				//type
+		data->colorBuff					//pixels 
+		);
+	
+	//depth
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, depthTexture);
+	glTexImage2D(
+		GL_TEXTURE_2D,					//target
+		(GLint)0,						//level
+		GL_RED,							//internalformat
+		(GLsizei)data->dAttrib.width,	//width
+		(GLsizei)data->dAttrib.height,	//height
+		(GLint)0,						//border
+		GL_RED,							//format
+		GL_UNSIGNED_SHORT,				//type
+		data->depthBuff					//pixels 
+		);
 
 	//calculate and update the projection and view matricies
 	mat4 P = projection();
@@ -229,13 +238,13 @@ void OculusRenderer::draw(){
 	glUniformMatrix4fv(ViewMatrixLoc      , 1, GL_TRUE, V);
 	
 	//calculate and update the model matrix
-	mat4 M = translation(vec3(0.0f, 0.5f, -5.0f));
-	M = M * scale(vec3(MESH_WIDTH / 100.0f, MESH_HEIGHT /100.0f, 1.0f));
+	mat4 M = translation(vec3(0.0f, 0.5f, -7.0f));
+	M = M * scale(vec3(MESH_WIDTH / 100.0f, MESH_HEIGHT / 100.0f, 1.0f));
 	glUniformMatrix4fv(ModelMatrixLoc, 1, GL_TRUE, M);
 
 	//draw the triangles
-	//glDrawElements(GL_TRIANGLES, 2 * ((MESH_WIDTH - 1) * (MESH_HEIGHT - 1)) * 3, GL_UNSIGNED_INT, 0);
-	glDrawArrays(GL_POINTS, 0, MESH_WIDTH * MESH_HEIGHT);
+	glDrawElements(GL_TRIANGLES, 2 * ((MESH_WIDTH - 1) * (MESH_HEIGHT - 1)) * 3, GL_UNSIGNED_INT, 0);
+	//glDrawArrays(GL_POINTS, 0, MESH_WIDTH * MESH_HEIGHT);
 
 	//clean up
 	glBindVertexArray(0);

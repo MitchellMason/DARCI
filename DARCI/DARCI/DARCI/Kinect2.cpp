@@ -116,7 +116,12 @@ void Kinect2::getColor(videoFrame* vframe) {
 
 	//Get latest frame
 	if (kinectOpen && kinectReady){
+		//make sure the data holder is clear
+		if (kColData != NULL)
+			kColData->Release();
+		//The big error to watch out for here is E_PENDING. if it happens, just keep trying
 		hr = colReader->AcquireLatestFrame(&kColData);
+		while (hr == E_PENDING){ hr = colReader->AcquireLatestFrame(&kColData); }
 
 		//Ensure there were no errors
 		if (SUCCEEDED(hr) && kColData){
@@ -130,6 +135,7 @@ void Kinect2::getColor(videoFrame* vframe) {
 				cByteBuffA[i + 2] = 0x00; //B
 				cByteBuffA[i + 3] = 0XFF; //A
 			}
+			printf("\rWARNING: KINECT SENSOR WAITING. HRESULT: %x\n", hr);
 		}
 	}
 	else{
@@ -140,7 +146,7 @@ void Kinect2::getColor(videoFrame* vframe) {
 			cByteBuffA[i + 2] = 0x00; //B
 			cByteBuffA[i + 3] = 0XFF; //A
 		}
-		printf("WARNING: KINECT SENSOR NOT KINNECTED.\n");
+		printf("\rWARNING: KINECT SENSOR NOT KINNECTED.\n");
 	}
 
 	//remove the alpha
@@ -155,11 +161,10 @@ void Kinect2::getColor(videoFrame* vframe) {
 
 	//copy the buffer and polish up
 	vframe->copyBuffer(cByteBuffNoA);
-	if (kColData != NULL)
-		kColData->Release();
 	delete[] cByteBuffA;
 	delete[] cByteBuffNoA;
 }
+
 void Kinect2::getDepth(videoFrame* dframe) {
 	//ensure the kinect is still open and ready
 	BOOLEAN kinectOpen = true;

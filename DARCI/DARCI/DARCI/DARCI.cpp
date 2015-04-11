@@ -63,19 +63,13 @@ void init(){
 	renderer->run();
 }
 
-//Runs forever while application is active
-void loop(){
-	//wait to join the active threads
-	Sleep(32);
-}
-
 //Entry point for application. 
 int wmain(int argc, char **argv[]){
 	printf("-----------------Welcome to DARCI------------------\n");
 	printf("-------------Written by Mitchell Mason-------------\n\n");
 	init();
 	while (renderer->isRunning()){
-		loop();
+		Sleep(100);
 	}
 	delete server;
 	delete client;

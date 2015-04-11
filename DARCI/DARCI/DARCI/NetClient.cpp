@@ -29,6 +29,25 @@ NetClient::NetClient(int port)
 		printf("Depth socket bind failed.\n");
 		exit(-1);
 	}
+
+	//specifiy that the sockets are blocking
+	u_long enableBlocking = 0;
+	int iResult = ioctlsocket(colSock, FIONBIO, &enableBlocking);
+	if (iResult != NO_ERROR){
+		printf("ioctlsocket failed with error %ld\n", iResult);
+	}
+
+	iResult = ioctlsocket(depSock, FIONBIO, &enableBlocking);
+	if (iResult != NO_ERROR){
+		printf("ioctlsocket failed with error %ld\n", iResult);
+	}
+	int recvBufferSize = 1080 * 1920 * 3;
+	if (0 != setsockopt(colSock, SOL_SOCKET, SO_SNDBUF, (const char*)&recvBufferSize, sizeof(recvBufferSize))){
+		printf("cannot set UDP buffer to requested size: %i. Error code %i\n", recvBufferSize, WSAGetLastError());
+	}
+	if (0 != setsockopt(depSock, SOL_SOCKET, SO_SNDBUF, (const char*)&recvBufferSize, sizeof(recvBufferSize))){
+		printf("cannot set UDP buffer to requested size: %i. Error code %i\n", recvBufferSize, WSAGetLastError());
+	}
 }
 
 NetClient::~NetClient()
@@ -60,8 +79,14 @@ void NetClient::run(NetClient *me, netClientData *data){
 	if (highestFD < *cSock) highestFD = *cSock;
 	if (highestFD < *dSock) highestFD = *dSock;
 
-	BYTE *recvBuff = new BYTE[data->cAttrib.bytesPerPixel * data->cAttrib.width * 10];
-	
+	//Helpers for receiving
+	const int cPacketLen = data->cAttrib.bytesPerPixel * (data->cAttrib.height / 108) * data->cAttrib.width + 4;
+	const int dPacketLen = data->dAttrib.bytesPerPixel * (data->dAttrib.height / 8) * data->dAttrib.width + 4;
+	const int recvBuffLen = cPacketLen * 108 * 3; //Allocate more than a few packets in memory, just in case
+	BYTE *recvBuff = new BYTE[recvBuffLen];
+	int received = 0;
+	INT32 offset = 0;
+
 	while (me->running){
 		FD_ZERO(socks);
 		FD_SET(*cSock, socks);
@@ -72,10 +97,37 @@ void NetClient::run(NetClient *me, netClientData *data){
 
 		//read whatever data is ready
 		if (FD_ISSET(*cSock, socks)){
-			recv(*cSock, (char *)data->colorBuff, 1920 * 1080 * 3, 0);
+			received = recv(*cSock, (char *)recvBuff, recvBuffLen, 0);
+			if (received > 0){
+				//printf("Got %f packets\n", (1.0f * received) / (1.0f * cPacketLen));
+				for (int i = 0; i < received; i += cPacketLen){
+					//first 4 bytes contain the index of the scanlines
+					memcpy(&offset, &recvBuff[i], sizeof(INT32));
+					offset *= (cPacketLen - sizeof(INT32));
+					
+					memcpy(data->colorBuff + offset, &recvBuff[i + sizeof(INT32)], cPacketLen - sizeof(INT32));
+				}
+			}
+			else{
+				printf("COLOR RECV ERROR CODE: %i, bytes received: %i\n", WSAGetLastError(), received);
+			}
 		}
 		if (FD_ISSET(*dSock, socks)){
-			recv(*dSock, (char *)data->depthBuff, 512 * 424 * 2, 0);
+			received = recv(*dSock, (char *)recvBuff, recvBuffLen, 0);
+			//copy the buffer into the texture at the index of the first byte
+			if (received > 0){
+				for (int i = 0; i < received; i += dPacketLen){
+					//first 4 bytes contain the index of the scanlines
+					memcpy(&offset, &recvBuff[i], sizeof(INT32));
+					offset *= dPacketLen;
+
+					//copy the data into the buffer
+					memcpy(data->depthBuff + offset, &recvBuff[i + sizeof(INT32)], dPacketLen - sizeof(INT32));
+				}
+			}
+			else{
+				printf("DEPTH RECV ERROR CODE: %i, bytes received: %i\n", WSAGetLastError(), received);
+			}
 		}
 	}
 	delete[] recvBuff;

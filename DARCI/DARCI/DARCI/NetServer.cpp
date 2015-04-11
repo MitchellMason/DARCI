@@ -67,6 +67,12 @@ void NetServer::run(NetServer *me){
 	BYTE *colPacket = new BYTE[colPacketLen];
 	BYTE *depPacket = new BYTE[depPacketLen];
 
+	//useful constants
+	const int cScanLinesPerPacket = 10;
+	const int cPacketsPerFrame = 108;
+	const int dScanLinesPerPacket = 53;
+	const int dPacketsPerFrame = 8;
+
 	while (me->threadRunning){
 		framesSent++;
 		bytesSent = 0;
@@ -86,14 +92,24 @@ void NetServer::run(NetServer *me){
 		if (debug) printf("sending color data.\n");
 
 		//Color (108 packets)
-		
-		for (INT32 i = 0; i < 108; i++){
-			memcpy(&colPacket[0], &i, sizeof(INT32)); //so each packet can be correctly placed in the scene
-			memcpy(&colPacket[sizeof(INT32)], cFrame->getBuffer() + (i * 10 * cFrame->getWidth()), colPacketLen);
+		for (INT32 i = 0; i < cPacketsPerFrame; i++){
+			//first 4 bytes are the packet index
+			memcpy(&colPacket[0], &i, sizeof(INT32));
+			
+			//copy the data
+			memcpy(&colPacket[sizeof(INT32)], 
+				cFrame->getBuffer() + (i * cScanLinesPerPacket * cFrame->getWidth() * cFrame->getBytesPerPixel()), 
+				colPacketLen);
+			
+			//send the data
 			errorCheck = sendto(cSock, (const char *)colPacket, colPacketLen, 0, (const sockaddr*)&cClient, sizeof(sockaddr));
+			
+			//ensure the data is sent, despite errors
 			while (errorCheck < 0){
 				errorCheck = sendto(cSock, (const char *)colPacket, colPacketLen, 0, (const sockaddr*)&cClient, sizeof(sockaddr));
 			}
+			
+			//add total data sent
 			bytesSent += errorCheck;
 		}
 				
@@ -101,13 +117,34 @@ void NetServer::run(NetServer *me){
 		if (debug) printf("sending depth frame.\n");
 
 		//Depth (8 packets)
-		for (INT32 i = 0; i < 8; i++){
+		for (INT32 i = 0; i < dPacketsPerFrame; i++){
+			/*
 			memcpy(&depPacket[0], &i, sizeof(INT32));
-			memcpy(&depPacket[sizeof(INT32)], dFrame->getBuffer() + (i * 53 * dFrame->getWidth()), depPacketLen);
+			memcpy(&depPacket[sizeof(INT32)], dFrame->getBuffer() + (i * dScanLinesPerPacket * dFrame->getWidth()), depPacketLen);
 			errorCheck = sendto(dSock, (const char *)depPacket, depPacketLen, 0, (const sockaddr *)&dClient, sizeof(sockaddr));
+			//force the sendto call to complete despite pending data
 			while (errorCheck < 0){
 				errorCheck = sendto(dSock, (const char *)depPacket, depPacketLen, 0, (const sockaddr *)&dClient, sizeof(sockaddr));
 			}
+			bytesSent += errorCheck;*/
+
+			//first 4 bytes are the packet index
+			memcpy(&depPacket[0], &i, sizeof(INT32));
+
+			//copy the data
+			memcpy(&depPacket[sizeof(INT32)],
+				dFrame->getBuffer() + (i * dScanLinesPerPacket * dFrame->getWidth() * dFrame->getBytesPerPixel()),
+				depPacketLen);
+
+			//send the data
+			errorCheck = sendto(dSock, (const char *)depPacket, depPacketLen, 0, (const sockaddr*)&dClient, sizeof(sockaddr));
+
+			//ensure the data is sent, despite errors
+			while (errorCheck < 0){
+				errorCheck = sendto(dSock, (const char *)depPacket, depPacketLen, 0, (const sockaddr*)&dClient, sizeof(sockaddr));
+			}
+
+			//add total data sent
 			bytesSent += errorCheck;
 		}
 
