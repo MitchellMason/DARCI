@@ -16,7 +16,7 @@ static const char *vshader = R"(
 	void main(){
 		fTexCoord = vTexCoord;
 		vec4 displacedvPosition = vPosition;
-		displacedvPosition.z = texture2D(depthTex, vTexCoord).r * 2.0;
+		displacedvPosition.z = texture2D(depthTex, vTexCoord) * -7.0;
 		gl_Position = proj * view * model * displacedvPosition;
 	}
 )";
@@ -226,7 +226,7 @@ void OculusRenderer::draw(){
 		(GLsizei)data->dAttrib.height,	//height
 		(GLint)0,						//border
 		GL_RED,							//format
-		GL_UNSIGNED_SHORT,				//type
+		GL_SHORT,						//type
 		data->depthBuff					//pixels 
 		);
 
@@ -243,8 +243,8 @@ void OculusRenderer::draw(){
 	glUniformMatrix4fv(ModelMatrixLoc, 1, GL_TRUE, M);
 
 	//draw the triangles
-	glDrawElements(GL_TRIANGLES, 2 * ((MESH_WIDTH - 1) * (MESH_HEIGHT - 1)) * 3, GL_UNSIGNED_INT, 0);
-	//glDrawArrays(GL_POINTS, 0, MESH_WIDTH * MESH_HEIGHT);
+	//glDrawElements(GL_TRIANGLES, 2 * ((MESH_WIDTH - 1) * (MESH_HEIGHT - 1)) * 3, GL_UNSIGNED_INT, 0);
+	glDrawArrays(GL_POINTS, 0, MESH_WIDTH * MESH_HEIGHT);
 
 	//clean up
 	glBindVertexArray(0);

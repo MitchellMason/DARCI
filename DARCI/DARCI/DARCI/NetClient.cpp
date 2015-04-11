@@ -42,10 +42,10 @@ NetClient::NetClient(int port)
 		printf("ioctlsocket failed with error %ld\n", iResult);
 	}
 	int recvBufferSize = 1080 * 1920 * 3;
-	if (0 != setsockopt(colSock, SOL_SOCKET, SO_SNDBUF, (const char*)&recvBufferSize, sizeof(recvBufferSize))){
+	if (0 != setsockopt(colSock, SOL_SOCKET, SO_RCVBUF, (const char*)&recvBufferSize, sizeof(recvBufferSize))){
 		printf("cannot set UDP buffer to requested size: %i. Error code %i\n", recvBufferSize, WSAGetLastError());
 	}
-	if (0 != setsockopt(depSock, SOL_SOCKET, SO_SNDBUF, (const char*)&recvBufferSize, sizeof(recvBufferSize))){
+	if (0 != setsockopt(depSock, SOL_SOCKET, SO_RCVBUF, (const char*)&recvBufferSize, sizeof(recvBufferSize))){
 		printf("cannot set UDP buffer to requested size: %i. Error code %i\n", recvBufferSize, WSAGetLastError());
 	}
 }
@@ -80,8 +80,8 @@ void NetClient::run(NetClient *me, netClientData *data){
 	if (highestFD < *dSock) highestFD = *dSock;
 
 	//Helpers for receiving
-	const int cPacketLen = data->cAttrib.bytesPerPixel * (data->cAttrib.height / 108) * data->cAttrib.width + 4;
-	const int dPacketLen = data->dAttrib.bytesPerPixel * (data->dAttrib.height / 8) * data->dAttrib.width + 4;
+	const int cPacketLen = data->cAttrib.bytesPerPixel * (data->cAttrib.height / 108) * data->cAttrib.width + sizeof(INT32);
+	const int dPacketLen = data->dAttrib.bytesPerPixel * (data->dAttrib.height / 8) * data->dAttrib.width + sizeof(INT32);
 	const int recvBuffLen = cPacketLen * 108 * 3; //Allocate more than a few packets in memory, just in case
 	BYTE *recvBuff = new BYTE[recvBuffLen];
 	int received = 0;
@@ -99,7 +99,6 @@ void NetClient::run(NetClient *me, netClientData *data){
 		if (FD_ISSET(*cSock, socks)){
 			received = recv(*cSock, (char *)recvBuff, recvBuffLen, 0);
 			if (received > 0){
-				//printf("Got %f packets\n", (1.0f * received) / (1.0f * cPacketLen));
 				for (int i = 0; i < received; i += cPacketLen){
 					//first 4 bytes contain the index of the scanlines
 					memcpy(&offset, &recvBuff[i], sizeof(INT32));
@@ -116,10 +115,11 @@ void NetClient::run(NetClient *me, netClientData *data){
 			received = recv(*dSock, (char *)recvBuff, recvBuffLen, 0);
 			//copy the buffer into the texture at the index of the first byte
 			if (received > 0){
+				//printf("Got %f packets\n", (1.0f * received) / (1.0f * dPacketLen));
 				for (int i = 0; i < received; i += dPacketLen){
 					//first 4 bytes contain the index of the scanlines
 					memcpy(&offset, &recvBuff[i], sizeof(INT32));
-					offset *= dPacketLen;
+					offset *= (dPacketLen - sizeof(INT32));
 
 					//copy the data into the buffer
 					memcpy(data->depthBuff + offset, &recvBuff[i + sizeof(INT32)], dPacketLen - sizeof(INT32));

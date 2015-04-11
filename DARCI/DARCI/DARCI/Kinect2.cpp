@@ -180,6 +180,18 @@ void Kinect2::getDepth(videoFrame* dframe) {
 		hr = depReader->AcquireLatestFrame(&kDepData);
 		if (SUCCEEDED(hr) && kDepData != NULL){
 			kDepData->CopyFrameDataToArray(totalPixels, depBuff);
+
+			//go through each pixel and if it's out of effective range, set it to 0
+			USHORT minDis = 0;
+			kDepData->get_DepthMinReliableDistance(&minDis);
+
+			USHORT maxDis = 0;
+			kDepData->get_DepthMaxReliableDistance(&maxDis);
+
+			for (int i = 0; i < totalPixels; i++){
+				if (depBuff[i] > maxDis || depBuff[i] < minDis)
+					depBuff[i] = 0;
+			}
 		}
 		else if(hr == E_PENDING){
 			//Set to white while waiting for depth channel to spin up.
@@ -196,7 +208,7 @@ void Kinect2::getDepth(videoFrame* dframe) {
 		totalPixels = 0;
 		printf("no kinect sensor\n");
 	}
-	
+
 	memcpy(depByteBuff, depBuff, totalPixels * sizeof(UINT16));
 
 	if (kDepData) kDepData->Release();

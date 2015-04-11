@@ -63,7 +63,7 @@ void NetServer::run(NetServer *me){
 	videoFrame *cFrame = new videoFrame(colFeedAttributes.width, colFeedAttributes.height, VIDEOTYPE::vCOLOR);
 	videoFrame *dFrame = new videoFrame(depFeedAttributes.width, depFeedAttributes.height, VIDEOTYPE::vDEPTH);
 	int colPacketLen = 3 * colFeedAttributes.width * 10 + sizeof(INT32);
-	int depPacketLen = depFeedAttributes.bytesPerPixel * depFeedAttributes.width * 53 + sizeof(INT16);
+	int depPacketLen = depFeedAttributes.bytesPerPixel * depFeedAttributes.width * 53 + sizeof(INT32);
 	BYTE *colPacket = new BYTE[colPacketLen];
 	BYTE *depPacket = new BYTE[depPacketLen];
 
@@ -118,16 +118,6 @@ void NetServer::run(NetServer *me){
 
 		//Depth (8 packets)
 		for (INT32 i = 0; i < dPacketsPerFrame; i++){
-			/*
-			memcpy(&depPacket[0], &i, sizeof(INT32));
-			memcpy(&depPacket[sizeof(INT32)], dFrame->getBuffer() + (i * dScanLinesPerPacket * dFrame->getWidth()), depPacketLen);
-			errorCheck = sendto(dSock, (const char *)depPacket, depPacketLen, 0, (const sockaddr *)&dClient, sizeof(sockaddr));
-			//force the sendto call to complete despite pending data
-			while (errorCheck < 0){
-				errorCheck = sendto(dSock, (const char *)depPacket, depPacketLen, 0, (const sockaddr *)&dClient, sizeof(sockaddr));
-			}
-			bytesSent += errorCheck;*/
-
 			//first 4 bytes are the packet index
 			memcpy(&depPacket[0], &i, sizeof(INT32));
 
