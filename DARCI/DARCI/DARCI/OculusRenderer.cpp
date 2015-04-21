@@ -1,38 +1,55 @@
 #include "OculusRenderer.h"
+#include <ctime>
 
 static const char *vshader = R"(
 	#version 150
+	#line 1
 
 	uniform mat4 model;
 	uniform mat4 view;
 	uniform mat4 proj;
 	uniform sampler2D depthTex;
+	uniform float farClipPlane;
 	
 	in vec4 vPosition;
 	in vec2 vTexCoord;
 
 	out vec2 fTexCoord;
+	out float depLookup; //delete
 
 	void main(){
 		fTexCoord = vTexCoord;
 		vec4 displacedvPosition = vPosition;
-		displacedvPosition.z = texture2D(depthTex, vTexCoord) * -7.0;
+
+		//Each pixel represents distance, in mm from the Kinect sensor
+		displacedvPosition.z = -texture(depthTex, vTexCoord) * 70.0;
+		depLookup = displacedvPosition.z;
+
 		gl_Position = proj * view * model * displacedvPosition;
 	}
 )";
 
 static const char *fshader = R"(
 	#version 150
+	#line 1
 	
 	in vec2 fTexCoord;
+	in float depLookup;
 
 	uniform sampler2D colorTex;
 
 	out vec4 fOutput;
 
 	void main(){
-		vec4 colorMap = texture2D(colorTex, fTexCoord);
-		fOutput = vec4(colorMap.r, colorMap.g, colorMap.b, 1.0);
+		//if the depth map input was 0, it's depth is unknown, thus we shouldn't draw it.
+		if(depLookup == 0){
+			fOutput = vec4(1.0,0.0,0.0,1.0);
+		}
+		else{
+			vec4 colorMap = texture2D(colorTex, fTexCoord);
+			//fOutput = vec4(colorMap.r, colorMap.g, colorMap.b, 1.0);
+			fOutput = vec4(mod(depLookup, 1.0),mod(depLookup, 1.0),mod(depLookup, 1.0),1.0);
+		}
 	}
 )";
 
@@ -69,6 +86,9 @@ OculusRenderer::OculusRenderer(netClientData *data){
 		ProjectionMatrixLoc = glGetUniformLocation(program, "proj");
 		ColorMapLoc =         glGetUniformLocation(program, "colorTex");
 		DepthMapLoc =		  glGetUniformLocation(program, "depthTex");
+		FarClipFloatLoc =	  glGetUniformLocation(program, "farClipPlane");
+
+		glPixelStorei(GL_PACK_SWAP_BYTES, GL_TRUE);
 
 		//initialize textures
 		glGenTextures((GLsizei)1, &depthTexture);
@@ -76,10 +96,14 @@ OculusRenderer::OculusRenderer(netClientData *data){
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+
 		glGenTextures((GLsizei)1, &colorTexture);
 		glBindTexture(GL_TEXTURE_2D, colorTexture);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		//Send the far clip plane
+		glUniform1f(FarClipFloatLoc, 150.0f);
 	}
 	else{
 		printf("Could not create opengl program.\n");
@@ -221,12 +245,12 @@ void OculusRenderer::draw(){
 	glTexImage2D(
 		GL_TEXTURE_2D,					//target
 		(GLint)0,						//level
-		GL_RED,							//internalformat
+		GL_R16,							//internalformat
 		(GLsizei)data->dAttrib.width,	//width
 		(GLsizei)data->dAttrib.height,	//height
 		(GLint)0,						//border
 		GL_RED,							//format
-		GL_SHORT,						//type
+		GL_UNSIGNED_SHORT,				//type
 		data->depthBuff					//pixels 
 		);
 

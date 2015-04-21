@@ -1,6 +1,6 @@
 #pragma once
 #include "InputDevice.h"
-#include "Kinect.h" //actual MS provided header files
+#include "Kinect.h"
 
 class Kinect2 : public InputDevice
 {
@@ -9,10 +9,7 @@ public:
 	~Kinect2();
 
 	int start();
-	void getColor(videoFrame* vframe);
-	void getDepth(videoFrame* dframe);
-	void getAudio(audioFrame* aframe);
-	void getSkel(skelFrame* sframe);
+	void getData(cameraData *data);
 	videoAttributes getColSpecs();
 	videoAttributes getDepSpecs();
 
@@ -20,7 +17,14 @@ private:
 	//init methods for the feeds
 	int initColor();
 	int initDepth();
-	void onColorFrameArrive();
+	int initCoordMap();
+	void lerp(UINT16 *start, UINT16 elements, UINT16 from, UINT16 to);
+	
+	//get individual data
+	void getColor(videoFrame* vframe);
+	void getDepth(videoFrame* dframe);
+	void getAudio(audioFrame* aframe);
+	void getSkel(skelFrame* sframe);
 
 	//Constants about kinect feed data.
 	const int kColWidth       = 1920;
@@ -44,5 +48,8 @@ private:
 	IDepthFrameSource *depSource = NULL;
 	IDepthFrameReader *depReader = NULL;
 	IDepthFrame       *kDepData  = NULL;
+
+	//Coordinate Mapper
+	ICoordinateMapper *coordMapper = NULL;
 };
 

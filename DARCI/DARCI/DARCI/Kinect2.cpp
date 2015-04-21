@@ -4,6 +4,7 @@
 */
 
 #include "Kinect2.h"
+#include <math.h>
 
 Kinect2::Kinect2() : InputDevice(kColHeight, kColWidth, kDepHeight, kDepWidth)
 {
@@ -43,12 +44,23 @@ int Kinect2::start(){
 	printf("---Kinect ready\n");
 
 	//Initialize the data types that will hold feeds
-	if (initColor() + initDepth() != 0){
+	if (initColor() + initDepth() + initCoordMap()!= 0){
 		printf("Kinect not started.\n");
 		return -1;
 	}
 
 	return 0;
+}
+
+int Kinect2::initCoordMap(){ 
+	hr = kinect->get_CoordinateMapper(&coordMapper);
+	if (!SUCCEEDED(hr)){
+		printf("Cannot get coordinate mapper\n");
+		return -1;
+	}
+	else{
+		return 0;
+	}
 }
 
 int Kinect2::initColor(){
@@ -174,29 +186,39 @@ void Kinect2::getDepth(videoFrame* dframe) {
 
 	int totalPixels = kDepHeight * kDepWidth;
 	UINT16 *depBuff = new UINT16[totalPixels];
-	BYTE *depByteBuff = new BYTE[totalPixels * sizeof(UINT16)];
 	if (kinectOpen && kinectReady){
 		//Get latest frame
 		hr = depReader->AcquireLatestFrame(&kDepData);
+		while (hr == E_PENDING) hr = depReader->AcquireLatestFrame(&kDepData);
 		if (SUCCEEDED(hr) && kDepData != NULL){
 			kDepData->CopyFrameDataToArray(totalPixels, depBuff);
 
-			//go through each pixel and if it's out of effective range, set it to 0
-			USHORT minDis = 0;
-			kDepData->get_DepthMinReliableDistance(&minDis);
+			//interpolate all depth errors out of the buffer
+			for (int i = 1; i < totalPixels; i++){
+				//any values equal to zero are errors.
+				if (depBuff[i] == 0){
+					//we know the leftmost good value, now we need the right
+					int end = i;
+					while (depBuff[end] == 0 && end < totalPixels-1){
+						end++;
+					}
 
-			USHORT maxDis = 0;
-			kDepData->get_DepthMaxReliableDistance(&maxDis);
-
-			for (int i = 0; i < totalPixels; i++){
-				if (depBuff[i] > maxDis || depBuff[i] < minDis)
-					depBuff[i] = 0;
+					//smooth out the errors
+					//printf("smoothing from %i to %i\n", i-1, end);
+					//printf("Old values: ");
+					//for (int k = i-1; k <= end; k++){
+					//	printf(" %i", depBuff[k]);
+					//}
+					//printf("\n");
+					lerp(&depBuff[i], end - i, depBuff[i-1], depBuff[end]);
+					//printf("New values: ");
+					//for (int k = i-1; k <= end; k++){
+					//	printf(" %i", depBuff[k]);
+					//}
+					//printf("\n");
+					i = end; //no need to check the values we just interpolated.
+				}
 			}
-		}
-		else if(hr == E_PENDING){
-			//Set to white while waiting for depth channel to spin up.
-			memset(depByteBuff, 0xFF, totalPixels * sizeof(UINT16));
-			totalPixels = 0;
 		}
 		else{
 			printf("Unknown error: %#x\n", hr);
@@ -209,10 +231,43 @@ void Kinect2::getDepth(videoFrame* dframe) {
 		printf("no kinect sensor\n");
 	}
 
-	memcpy(depByteBuff, depBuff, totalPixels * sizeof(UINT16));
-
 	if (kDepData) kDepData->Release();
-	dframe->copyBuffer(depByteBuff);
+	dframe->copyBuffer((unsigned char*) depBuff);
 	delete[] depBuff;
-	delete[] depByteBuff;
+}
+
+//smooths out errors in the Depth buffer using linear interpolation
+void Kinect2::lerp(UINT16 *start, UINT16 elements, UINT16 from, UINT16 to){
+	double interval = ((double)(to - from)) / elements;
+	for (int i = 0; i < elements; i++){
+		start[i] = (i * interval) + from;
+	}
+}
+
+void Kinect2::getData(cameraData* data){
+	getColor(&(data->color));
+	getDepth(&(data->depth));
+
+	coordMapper->Release();
+	hr = kinect->get_CoordinateMapper(&coordMapper);
+	if (SUCCEEDED(hr)){
+		int totalDepthPoints = data->depth.getHeight() * data->depth.getWidth();
+		DepthSpacePoint *depthPoints = new DepthSpacePoint[totalDepthPoints];
+		coordMapper->MapColorFrameToDepthSpace(
+			totalDepthPoints,
+			(const UINT16*)data->depth.getBuffer(),
+			totalDepthPoints,
+			depthPoints
+			);
+		float temp = depthPoints[0].X;
+		for (int i = 1; i < totalDepthPoints; i++){
+			if (depthPoints[i].X != temp)
+				printf("Break! %f\n", depthPoints[i]);
+		}
+		//printf("Done mapping\n");
+		delete[] depthPoints;
+	}
+	else{
+		printf("Cannot map data. Unable to get new coordinate mapper. hr is %i\n", hr);
+	}
 }

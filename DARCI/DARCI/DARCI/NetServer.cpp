@@ -62,6 +62,9 @@ void NetServer::run(NetServer *me){
 	//buffer allocation
 	videoFrame *cFrame = new videoFrame(colFeedAttributes.width, colFeedAttributes.height, VIDEOTYPE::vCOLOR);
 	videoFrame *dFrame = new videoFrame(depFeedAttributes.width, depFeedAttributes.height, VIDEOTYPE::vDEPTH);
+	cameraData *cData = (cameraData*) malloc(sizeof(cameraData));
+	cData->color = *cFrame;
+	cData->depth = *dFrame;
 	int colPacketLen = 3 * colFeedAttributes.width * 10 + sizeof(INT32);
 	int depPacketLen = depFeedAttributes.bytesPerPixel * depFeedAttributes.width * 53 + sizeof(INT32);
 	BYTE *colPacket = new BYTE[colPacketLen];
@@ -84,8 +87,7 @@ void NetServer::run(NetServer *me){
 		if (debug) printf("getting video data.\n");
 		
 		//get the data
-		me->camera->getColor(cFrame);
-		me->camera->getDepth(dFrame);
+		me->camera->getData(cData);
 		
 		//send the data
 		

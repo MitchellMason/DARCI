@@ -52,5 +52,6 @@ private:
 	GLint ProjectionMatrixLoc;
 	GLint ColorMapLoc;
 	GLint DepthMapLoc;
+	GLint FarClipFloatLoc;
 };
 

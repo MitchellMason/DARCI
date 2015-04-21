@@ -48,3 +48,8 @@ private:
 class audioFrame{};
 class skelFrame{};
 
+typedef struct{
+	videoFrame color;
+	videoFrame depth;
+	audioFrame audio;
+} cameraData;

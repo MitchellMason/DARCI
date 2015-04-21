@@ -23,10 +23,7 @@ public:
 
 	//overwritten methods for each possible device
 	virtual int start() = 0;
-	virtual void getColor(videoFrame* vframe) = 0;
-	virtual void getDepth(videoFrame* dframe) = 0;
-	virtual void getAudio(audioFrame* aframe) = 0;
-	virtual void getSkel(skelFrame* sframe)   = 0;
+	virtual void getData(cameraData* data) = 0;
 	virtual videoAttributes getColSpecs() = 0;
 	virtual videoAttributes getDepSpecs() = 0;
 };
