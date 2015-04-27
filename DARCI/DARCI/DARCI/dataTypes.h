@@ -16,6 +16,7 @@ typedef struct {
 	videoAttributes cAttrib;
 	unsigned char *depthBuff;
 	videoAttributes dAttrib;
+	bool newData;
 } netClientData;
 
 enum VIDEOTYPE{

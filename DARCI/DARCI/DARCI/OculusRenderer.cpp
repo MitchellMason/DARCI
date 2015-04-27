@@ -9,7 +9,6 @@ static const char *vshader = R"(
 	uniform mat4 view;
 	uniform mat4 proj;
 	uniform sampler2D depthTex;
-	uniform float farClipPlane;
 	
 	in vec4 vPosition;
 	in vec2 vTexCoord;
@@ -22,8 +21,10 @@ static const char *vshader = R"(
 		vec4 displacedvPosition = vPosition;
 
 		//Each pixel represents distance, in mm from the Kinect sensor
-		displacedvPosition.z = -texture(depthTex, vTexCoord) * 70.0;
-		depLookup = displacedvPosition.z;
+		depLookup = texture(depthTex, vTexCoord);
+		displacedvPosition.z = depLookup * -275.0f;
+		//displacedvPosition.z = 1.0f;
+		//displacedvPosition.z = depLookup;
 
 		gl_Position = proj * view * model * displacedvPosition;
 	}
@@ -42,13 +43,15 @@ static const char *fshader = R"(
 
 	void main(){
 		//if the depth map input was 0, it's depth is unknown, thus we shouldn't draw it.
+		vec4 colorMap = texture2D(colorTex, fTexCoord);
 		if(depLookup == 0){
-			fOutput = vec4(1.0,0.0,0.0,1.0);
+			fOutput = vec4(0.0,0.0,0.0,0.0);
+			//fOutput = vec4(colorMap.r, colorMap.g, colorMap.b, 1.0);
 		}
 		else{
-			vec4 colorMap = texture2D(colorTex, fTexCoord);
-			//fOutput = vec4(colorMap.r, colorMap.g, colorMap.b, 1.0);
-			fOutput = vec4(mod(depLookup, 1.0),mod(depLookup, 1.0),mod(depLookup, 1.0),1.0);
+			fOutput = vec4(colorMap.r, colorMap.g, colorMap.b, 1.0);
+			//fOutput = vec4(mod(depLookup, 1.0),mod(depLookup, 1.0),mod(depLookup, 1.0),1.0);
+			//fOutput = vec4(0.0,0.0,0.0,1.0);
 		}
 	}
 )";
@@ -86,7 +89,6 @@ OculusRenderer::OculusRenderer(netClientData *data){
 		ProjectionMatrixLoc = glGetUniformLocation(program, "proj");
 		ColorMapLoc =         glGetUniformLocation(program, "colorTex");
 		DepthMapLoc =		  glGetUniformLocation(program, "depthTex");
-		FarClipFloatLoc =	  glGetUniformLocation(program, "farClipPlane");
 
 		glPixelStorei(GL_PACK_SWAP_BYTES, GL_TRUE);
 
@@ -102,15 +104,27 @@ OculusRenderer::OculusRenderer(netClientData *data){
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		//Send the far clip plane
-		glUniform1f(FarClipFloatLoc, 150.0f);
+		//Set the point sizes
+		glPointSize(1.5f);
+		glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+		glEnable(GL_POINT_SMOOTH);
+
+		//Enable alpha so we can not draw unused points
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		//set the texture registers
+		glUniform1i(ColorMapLoc, 0);
+		glUniform1i(DepthMapLoc, 1);
+
+		//perform the first clear operation
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 	else{
 		printf("Could not create opengl program.\n");
 		exit(-1);
 	}
 }
-
 
 OculusRenderer::~OculusRenderer(){
 	glDeleteProgram(program);
@@ -215,13 +229,11 @@ float OculusRenderer::map(float val, float inStart, float inStop, float outStart
 //draw logic here
 void OculusRenderer::draw(){
 	//Clear the buffer
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(program);
 	glBindVertexArray(vertexArray);
-
-	//update the textures
-	glUniform1i(ColorMapLoc, 0);
-	glUniform1i(DepthMapLoc, 1);
+	
+	//only pipe new data to the GPU
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//color
 	glActiveTexture(GL_TEXTURE0);
@@ -253,6 +265,7 @@ void OculusRenderer::draw(){
 		GL_UNSIGNED_SHORT,				//type
 		data->depthBuff					//pixels 
 		);
+	
 
 	//calculate and update the projection and view matricies
 	mat4 P = projection();
@@ -262,7 +275,7 @@ void OculusRenderer::draw(){
 	glUniformMatrix4fv(ViewMatrixLoc      , 1, GL_TRUE, V);
 	
 	//calculate and update the model matrix
-	mat4 M = translation(vec3(0.0f, 0.5f, -7.0f));
+	mat4 M = translation(vec3(0.0f, 0.5f, -5.0f));
 	M = M * scale(vec3(MESH_WIDTH / 100.0f, MESH_HEIGHT / 100.0f, 1.0f));
 	glUniformMatrix4fv(ModelMatrixLoc, 1, GL_TRUE, M);
 

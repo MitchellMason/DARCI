@@ -8,10 +8,11 @@
 #include "NetServer.h"
 #include "NetClient.h"
 #include "OculusRenderer.h"
+#include "SDL.h"
 #include <iostream>
 #include <stdio.h>
 #include <limits>
-#include "SDL.h"
+#include <math.h>
 
 SDL_Event event;
 int basePort = 9000; //the port all data communication begins at

@@ -57,7 +57,14 @@ void NetServer::run(NetServer *me){
 	int framesSent = 0;
 	int errorCheck = 0;
 	int bytesSent;
-	const bool debug = false;
+	
+	//useful constants
+	const int cScanLinesPerPacket = 8;
+	const int cPacketsPerFrame = 53;
+	const int dScanLinesPerPacket = 53;
+	const int dPacketsPerFrame = 8;
+	const int colPacketLen = cScanLinesPerPacket * colFeedAttributes.width * 3 + sizeof(INT32);
+	const int depPacketLen = dScanLinesPerPacket * depFeedAttributes.width * 2 + sizeof(INT32);
 
 	//buffer allocation
 	videoFrame *cFrame = new videoFrame(colFeedAttributes.width, colFeedAttributes.height, VIDEOTYPE::vCOLOR);
@@ -65,17 +72,10 @@ void NetServer::run(NetServer *me){
 	cameraData *cData = (cameraData*) malloc(sizeof(cameraData));
 	cData->color = *cFrame;
 	cData->depth = *dFrame;
-	int colPacketLen = 3 * colFeedAttributes.width * 10 + sizeof(INT32);
-	int depPacketLen = depFeedAttributes.bytesPerPixel * depFeedAttributes.width * 53 + sizeof(INT32);
 	BYTE *colPacket = new BYTE[colPacketLen];
 	BYTE *depPacket = new BYTE[depPacketLen];
 
-	//useful constants
-	const int cScanLinesPerPacket = 10;
-	const int cPacketsPerFrame = 108;
-	const int dScanLinesPerPacket = 53;
-	const int dPacketsPerFrame = 8;
-
+	//Server loop
 	while (me->threadRunning){
 		framesSent++;
 		bytesSent = 0;
@@ -83,17 +83,11 @@ void NetServer::run(NetServer *me){
 		//mark the beginning of the transfer
 		GetSystemTime(time);
 		startT = (time->wSecond * 1000) + time->wMilliseconds;
-		
-		if (debug) printf("getting video data.\n");
-		
+				
 		//get the data
 		me->camera->getData(cData);
 		
-		//send the data
-		
-		if (debug) printf("sending color data.\n");
-
-		//Color (108 packets)
+		//Color 
 		for (INT32 i = 0; i < cPacketsPerFrame; i++){
 			//first 4 bytes are the packet index
 			memcpy(&colPacket[0], &i, sizeof(INT32));
@@ -108,15 +102,18 @@ void NetServer::run(NetServer *me){
 			
 			//ensure the data is sent, despite errors
 			while (errorCheck < 0){
-				errorCheck = sendto(cSock, (const char *)colPacket, colPacketLen, 0, (const sockaddr*)&cClient, sizeof(sockaddr));
+				int error = WSAGetLastError();
+				if (error == WSAEWOULDBLOCK)
+					errorCheck = sendto(cSock, (const char *)colPacket, colPacketLen, 0, (const sockaddr*)&cClient, sizeof(sockaddr));
+				else{
+					printf("Socket error: %i", error);
+				}
 			}
 			
 			//add total data sent
 			bytesSent += errorCheck;
 		}
 				
-
-		if (debug) printf("sending depth frame.\n");
 
 		//Depth (8 packets)
 		for (INT32 i = 0; i < dPacketsPerFrame; i++){

@@ -112,7 +112,6 @@ bool OVR_SDL2_app::init_OVR()
 
 	if (hmd == 0){
 		hmd = ovrHmd_CreateDebug(ovrHmd_DK1);
-		printf("No HMD found\n");
 	}
 
     // Enable all tracking capabilities on this HMD.

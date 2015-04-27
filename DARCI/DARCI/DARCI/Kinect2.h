@@ -1,6 +1,7 @@
 #pragma once
 #include "InputDevice.h"
 #include "Kinect.h"
+#include <algorithm>
 
 class Kinect2 : public InputDevice
 {
@@ -18,6 +19,7 @@ private:
 	int initColor();
 	int initDepth();
 	int initCoordMap();
+	void repairDepthData(UINT16 depPointLen, UINT16* depthFrame);
 	void lerp(UINT16 *start, UINT16 elements, UINT16 from, UINT16 to);
 	
 	//get individual data
@@ -32,6 +34,8 @@ private:
 	const int kColBytesPerPix = 4;
 	const int kDepWidth       = 512;
 	const int kDepHeight      = 424;
+	const int kMappedColWidth = 512;
+	const int kMappedColHeight = 424;
 	
 	//MS type that stores results from API calls.
 	HRESULT hr = NULL;
@@ -51,5 +55,17 @@ private:
 
 	//Coordinate Mapper
 	ICoordinateMapper *coordMapper = NULL;
+
+	//data used in coordinate mapping
+	videoFrame *rawColor;
+	BYTE *mappedColor;
+	ColorSpacePoint *cSpace;
+	const int cSpacePoints = kDepWidth * kDepHeight;
+
+	//Buffer used in depth interpolation
+	UINT16 *correctedDepth;
+	UINT16 *grid;
+	const int gridDim = 3;
+	const int gridElementLen = gridDim * gridDim;
 };
 

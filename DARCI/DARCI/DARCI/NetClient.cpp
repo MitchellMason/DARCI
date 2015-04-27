@@ -80,9 +80,9 @@ void NetClient::run(NetClient *me, netClientData *data){
 	if (highestFD < *dSock) highestFD = *dSock;
 
 	//Helpers for receiving
-	const int cPacketLen = data->cAttrib.bytesPerPixel * (data->cAttrib.height / 108) * data->cAttrib.width + sizeof(INT32);
+	const int cPacketLen = data->cAttrib.bytesPerPixel * (data->cAttrib.height / 53) * data->cAttrib.width + sizeof(INT32);
 	const int dPacketLen = data->dAttrib.bytesPerPixel * (data->dAttrib.height / 8) * data->dAttrib.width + sizeof(INT32);
-	const int recvBuffLen = cPacketLen * 108 * 3; //Allocate more than a few packets in memory, just in case
+	const int recvBuffLen = cPacketLen * 8;
 	BYTE *recvBuff = new BYTE[recvBuffLen];
 	int received = 0;
 	INT32 offset = 0;
@@ -106,6 +106,9 @@ void NetClient::run(NetClient *me, netClientData *data){
 					
 					memcpy(data->colorBuff + offset, &recvBuff[i + sizeof(INT32)], cPacketLen - sizeof(INT32));
 				}
+				
+				//let the renderer know there's new stuff
+				data->newData = true;
 			}
 			else{
 				printf("COLOR RECV ERROR CODE: %i, bytes received: %i\n", WSAGetLastError(), received);
@@ -123,7 +126,11 @@ void NetClient::run(NetClient *me, netClientData *data){
 
 					//copy the data into the buffer
 					memcpy(data->depthBuff + offset, &recvBuff[i + sizeof(INT32)], dPacketLen - sizeof(INT32));
+					
 				}
+				
+				//let the renderer know there's new stuff
+				data->newData = true;
 			}
 			else{
 				printf("DEPTH RECV ERROR CODE: %i, bytes received: %i\n", WSAGetLastError(), received);
@@ -135,21 +142,21 @@ void NetClient::run(NetClient *me, netClientData *data){
 SOCKET* NetClient::getSock(SOCKTYPE s){
 	switch (s)
 	{
-	case COLOR:
-		return &colSock;
-		break;
-	case DEPTH:
-		return &depSock;
-		break;
-	case AUDIO:
-		break;
-	case SKELETON:
-		break;
-	case REMOTE_EVENTS:
-		break;
-	default:
-		return NULL;
-		break;
+		case COLOR:
+			return &colSock;
+			break;
+		case DEPTH:
+			return &depSock;
+			break;
+		case AUDIO:
+			break;
+		case SKELETON:
+			break;
+		case REMOTE_EVENTS:
+			break;
+		default:
+			return NULL;
+			break;
 	}
 	return NULL;
 }

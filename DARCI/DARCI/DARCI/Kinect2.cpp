@@ -4,11 +4,10 @@
 */
 
 #include "Kinect2.h"
-#include <math.h>
 
 Kinect2::Kinect2() : InputDevice(kColHeight, kColWidth, kDepHeight, kDepWidth)
 {
-	;
+
 }
 
 Kinect2::~Kinect2()
@@ -16,6 +15,7 @@ Kinect2::~Kinect2()
 	if (kinect){
 		kinect->Close();
 	}
+	delete[] cSpace;
 }
 
 int Kinect2::start(){
@@ -49,6 +49,14 @@ int Kinect2::start(){
 		return -1;
 	}
 
+	//Initialize the coordinate mapping buffer
+	cSpace = new ColorSpacePoint[cSpacePoints];
+	mappedColor = new BYTE[kMappedColHeight * kMappedColWidth * 3 * sizeof(BYTE)]; //RGB byte buffer
+	rawColor = new videoFrame(kColWidth, kColHeight, vCOLOR);
+
+	//initialize buffer used in depth map correction
+	correctedDepth = new UINT16[kDepHeight * kDepWidth];
+	grid = new UINT16[gridElementLen];
 	return 0;
 }
 
@@ -98,8 +106,8 @@ int Kinect2::initDepth(){
 videoAttributes Kinect2::getColSpecs(){
 	videoAttributes *result = new videoAttributes;
 	result->bytesPerPixel = kColBytesPerPix;
-	result->width = kColWidth;
-	result->height = kColHeight;
+	result->width = kMappedColWidth;
+	result->height = kMappedColHeight;
 	return *result;
 }
 
@@ -169,7 +177,7 @@ void Kinect2::getColor(videoFrame* vframe) {
 		cByteBuffNoA[j + 1] = cByteBuffA[i + 1];
 		cByteBuffNoA[j + 0] = cByteBuffA[i + 2];
 		i += 4;
-	}
+	}	
 
 	//copy the buffer and polish up
 	vframe->copyBuffer(cByteBuffNoA);
@@ -192,33 +200,6 @@ void Kinect2::getDepth(videoFrame* dframe) {
 		while (hr == E_PENDING) hr = depReader->AcquireLatestFrame(&kDepData);
 		if (SUCCEEDED(hr) && kDepData != NULL){
 			kDepData->CopyFrameDataToArray(totalPixels, depBuff);
-
-			//interpolate all depth errors out of the buffer
-			for (int i = 1; i < totalPixels; i++){
-				//any values equal to zero are errors.
-				if (depBuff[i] == 0){
-					//we know the leftmost good value, now we need the right
-					int end = i;
-					while (depBuff[end] == 0 && end < totalPixels-1){
-						end++;
-					}
-
-					//smooth out the errors
-					//printf("smoothing from %i to %i\n", i-1, end);
-					//printf("Old values: ");
-					//for (int k = i-1; k <= end; k++){
-					//	printf(" %i", depBuff[k]);
-					//}
-					//printf("\n");
-					lerp(&depBuff[i], end - i, depBuff[i-1], depBuff[end]);
-					//printf("New values: ");
-					//for (int k = i-1; k <= end; k++){
-					//	printf(" %i", depBuff[k]);
-					//}
-					//printf("\n");
-					i = end; //no need to check the values we just interpolated.
-				}
-			}
 		}
 		else{
 			printf("Unknown error: %#x\n", hr);
@@ -240,34 +221,111 @@ void Kinect2::getDepth(videoFrame* dframe) {
 void Kinect2::lerp(UINT16 *start, UINT16 elements, UINT16 from, UINT16 to){
 	double interval = ((double)(to - from)) / elements;
 	for (int i = 0; i < elements; i++){
-		start[i] = (i * interval) + from;
+		start[i] = static_cast<UINT16>((i * interval) + from);
 	}
 }
 
-void Kinect2::getData(cameraData* data){
-	getColor(&(data->color));
-	getDepth(&(data->depth));
+//cleans up depth data errors 
+void Kinect2::repairDepthData(UINT16 depPointLen, UINT16* depthFrame){
+	//grab the 5x5 grid of pixels and sort them. Set the value to the median value
+	for (int y = (gridDim / 2); y < kDepHeight - (gridDim / 2); y++){
+		for (int x = (gridDim / 2); x < kDepWidth - (gridDim / 2); x++){
+			//fill the grid of pixels to consider
+			for (int i=0; i<gridDim; i++) {
+				memcpy(
+					grid + (i * gridDim), 
+					depthFrame + (((y+(i - (gridDim/2))) * kDepWidth) + x), 
+					gridDim * sizeof(INT16)
+					);
+			}
 
+			//Sort that grid, and assign the value to the median
+			std::sort(grid, grid + gridElementLen);
+			correctedDepth[(y * kDepWidth) + x] = grid[gridElementLen / 2];
+		}
+	}
+	memcpy((void *)depthFrame, (void *)correctedDepth, kDepWidth * kDepHeight * sizeof(UINT16));
+
+	//Elimate outlier points
+	/*const int thresh = 2;
+	for (int y = 0, d = y; y < kDepHeight; y++){
+		for (int x = 0; x < kDepWidth; x++, d++){
+			UINT16 left  = depthFrame[d - 1];
+			UINT16 right = depthFrame[d + 1];
+			UINT16 curr = depthFrame[d];
+			if (abs(curr - left) < thresh || abs(curr - right) < thresh)
+				correctedDepth[d] = depthFrame[d];
+			else
+				correctedDepth[d] = 0;
+		}
+	}
+	memcpy((void *)depthFrame, (void *)correctedDepth, kDepWidth * kDepHeight * sizeof(UINT16));*/
+}
+
+
+
+void Kinect2::getData(cameraData* data){
+	//get the raw data
+
+	getColor(rawColor);
+	getDepth(&(data->depth));
+	unsigned char *rawColorBuffer = rawColor->getBuffer();
+	unsigned char *depthBuffer = data->depth.getBuffer();
+
+	//Reconstruct the image for point clouds
 	coordMapper->Release();
 	hr = kinect->get_CoordinateMapper(&coordMapper);
 	if (SUCCEEDED(hr)){
-		int totalDepthPoints = data->depth.getHeight() * data->depth.getWidth();
-		DepthSpacePoint *depthPoints = new DepthSpacePoint[totalDepthPoints];
-		coordMapper->MapColorFrameToDepthSpace(
-			totalDepthPoints,
-			(const UINT16*)data->depth.getBuffer(),
-			totalDepthPoints,
-			depthPoints
-			);
-		float temp = depthPoints[0].X;
-		for (int i = 1; i < totalDepthPoints; i++){
-			if (depthPoints[i].X != temp)
-				printf("Break! %f\n", depthPoints[i]);
+		//Get the coordinate mapping object
+		hr = coordMapper->MapDepthFrameToColorSpace(
+			data->depth.getHeight() * data->depth.getWidth(),
+			(UINT16*) data->depth.getBuffer(),
+			cSpacePoints,
+			cSpace
+		);
+
+		if (SUCCEEDED(hr)){
+			//create the color frame from the whole image using the coordinate mapping data.
+			unsigned char* pix = new unsigned char[3];
+			for (int i = 0; i < cSpacePoints; i++){
+				//Current color space coordinate
+				ColorSpacePoint point = cSpace[i];
+
+				if (point.X != -std::numeric_limits<float>::infinity() && point.Y != -std::numeric_limits<float>::infinity()){
+					//get the x and y index of the unmapped pixel to use
+					int x = static_cast<float>(point.X + 0.5f);
+					int y = static_cast<float>(point.Y + 0.5f);
+					
+					if (x > 0 && x < kColWidth && y > 0 && y < kColHeight){
+						//get the index of that pixel in the unmapped image
+						int pixIndex = (y * rawColor->getWidth()) + x;
+						memcpy((void *)pix, (void *)&(rawColorBuffer[pixIndex * 3]), 3);
+					}
+				}
+
+				//copy the RGB values from the mapped version into the new texture
+				memcpy((void *)&(data->color.getBuffer()[i * 3]), (void *)pix, sizeof(BYTE) * 3);
+			}
+			delete[] pix;
 		}
-		//printf("Done mapping\n");
-		delete[] depthPoints;
+		else{
+			printf("Unknown error: %#x\n", hr);
+		}
+
 	}
 	else{
 		printf("Cannot map data. Unable to get new coordinate mapper. hr is %i\n", hr);
 	}
+
+	//clean up the depth data for better rendering
+	//For testing only
+	for (UINT16 i = 0; i < kDepWidth; i++){
+		for (UINT16 j = 0; j < kDepHeight; j++, i++){
+			memset((void *)&(depthBuffer[i]), (UINT16)0, sizeof(UINT16));
+		}
+	}
+	repairDepthData(
+		data->depth.getHeight() * data->depth.getWidth(),
+		(UINT16*)data->depth.getBuffer();
+		);
 }
