@@ -56,7 +56,11 @@ int Kinect2::start(){
 
 	//initialize buffer used in depth map correction
 	correctedDepth = new UINT16[kDepHeight * kDepWidth];
-	grid = new UINT16[gridElementLen];
+	histogram = new UINT16[gridElementLen];
+	columnHistogram = new UINT16*[kDepWidth];
+	for (int i = 0; i < kDepWidth; i++){
+		columnHistogram[i] = new UINT16[gridRadius];
+	}
 	return 0;
 }
 
@@ -225,41 +229,48 @@ void Kinect2::lerp(UINT16 *start, UINT16 elements, UINT16 from, UINT16 to){
 	}
 }
 
-//cleans up depth data errors 
+//cleans up depth data errors using the Fast Median filter
 void Kinect2::repairDepthData(UINT16 depPointLen, UINT16* depthFrame){
-	//grab the 5x5 grid of pixels and sort them. Set the value to the median value
-	for (int y = (gridDim / 2); y < kDepHeight - (gridDim / 2); y++){
-		for (int x = (gridDim / 2); x < kDepWidth - (gridDim / 2); x++){
-			//fill the grid of pixels to consider
-			for (int i=0; i<gridDim; i++) {
-				memcpy(
-					grid + (i * gridDim), 
-					depthFrame + (((y+(i - (gridDim/2))) * kDepWidth) + x), 
-					gridDim * sizeof(INT16)
-					);
+	/*memset(correctedDepth, 0, kDepHeight * kDepWidth * sizeof(UINT16));
+	//initialize the histograms
+	for (int row = 0, i = 0; row < kDepWidth; row++){
+		for (int col = 0; col < kDepHeight; col++, i++){
+			columnHistogram[row][col] = depthFrame[(col * kDepWidth) + row];
+		}
+	}
+	for (int row = 0, i = 0; row < gridRadius; row++){
+		for (int col = 0; col < gridRadius; col++, i++){
+			histogram[i] = depthFrame[(col * kDepWidth) + row];
+		}
+	}
+
+	//calulate the new histogram and store the median of each pixel as the result
+	for (int i = 0; i < kDepWidth; i++){
+		for (int j = 0; j < kDepHeight; j++){
+			//remove element depthFrame(i-r-1, j+r) from the column histogram
+			memcpy((void *)&columnHistogram[j][0], (void *)&columnHistogram[j][1], gridRadius - 1 * sizeof(UINT16));
+
+			//add the next element from depthFrame at (i+r,j+r)
+			columnHistogram[j][0] = depthFrame[((j+gridRadius) * kDepWidth) + (i+gridRadius)];
+
+			//copy this column into the histogram we'll take the median of
+			memcpy((void*)&histogram[0], (void *)&histogram[gridRadius], (gridRadius * (gridRadius - 1) * sizeof(UINT16)));
+
+			memcpy((void*)&histogram[gridRadius], (void*)columnHistogram[j], gridRadius * sizeof(UINT16));
+		}
+	}*/
+
+	int gridIndex = 0;
+	for (int i = 0; i < kDepWidth; i++){
+		for (int j = 0; j < kDepHeight; j++){
+			for (int k = -gridRadius; k < gridRadius; k++){
+				int x = i + k;
+				int y = j - gridRadius - 1;
+				histogram[gridIndex] = depthFrame[(y * kDepWidth) + x];
 			}
-
-			//Sort that grid, and assign the value to the median
-			std::sort(grid, grid + gridElementLen);
-			correctedDepth[(y * kDepWidth) + x] = grid[gridElementLen / 2];
 		}
 	}
-	memcpy((void *)depthFrame, (void *)correctedDepth, kDepWidth * kDepHeight * sizeof(UINT16));
-
-	//Elimate outlier points
-	/*const int thresh = 2;
-	for (int y = 0, d = y; y < kDepHeight; y++){
-		for (int x = 0; x < kDepWidth; x++, d++){
-			UINT16 left  = depthFrame[d - 1];
-			UINT16 right = depthFrame[d + 1];
-			UINT16 curr = depthFrame[d];
-			if (abs(curr - left) < thresh || abs(curr - right) < thresh)
-				correctedDepth[d] = depthFrame[d];
-			else
-				correctedDepth[d] = 0;
-		}
-	}
-	memcpy((void *)depthFrame, (void *)correctedDepth, kDepWidth * kDepHeight * sizeof(UINT16));*/
+	memcpy(depthFrame, correctedDepth, kDepWidth * kDepHeight * sizeof(UINT16));
 }
 
 
@@ -318,14 +329,8 @@ void Kinect2::getData(cameraData* data){
 	}
 
 	//clean up the depth data for better rendering
-	//For testing only
-	for (UINT16 i = 0; i < kDepWidth; i++){
-		for (UINT16 j = 0; j < kDepHeight; j++, i++){
-			memset((void *)&(depthBuffer[i]), (UINT16)0, sizeof(UINT16));
-		}
-	}
 	repairDepthData(
 		data->depth.getHeight() * data->depth.getWidth(),
-		(UINT16*)data->depth.getBuffer();
+		(UINT16*)data->depth.getBuffer()
 		);
 }

@@ -64,8 +64,9 @@ private:
 
 	//Buffer used in depth interpolation
 	UINT16 *correctedDepth;
-	UINT16 *grid;
-	const int gridDim = 3;
-	const int gridElementLen = gridDim * gridDim;
+	UINT16 *histogram;
+	const static int gridRadius = 5;
+	UINT16 **columnHistogram;
+	const int gridElementLen = gridRadius * gridRadius;
 };
 
