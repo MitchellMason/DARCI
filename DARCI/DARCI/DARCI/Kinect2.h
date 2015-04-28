@@ -2,6 +2,8 @@
 #include "InputDevice.h"
 #include "Kinect.h"
 #include <algorithm>
+#include "opencv2\imgproc.hpp"
+
 
 class Kinect2 : public InputDevice
 {
@@ -19,8 +21,9 @@ private:
 	int initColor();
 	int initDepth();
 	int initCoordMap();
-	void repairDepthData(UINT16 depPointLen, UINT16* depthFrame);
+	void repairDepthData(UINT16* depthFrame);
 	void lerp(UINT16 *start, UINT16 elements, UINT16 from, UINT16 to);
+	int inline to2Dindex(int x, int y, int width);
 	
 	//get individual data
 	void getColor(videoFrame* vframe);
@@ -65,7 +68,7 @@ private:
 	//Buffer used in depth interpolation
 	UINT16 *correctedDepth;
 	UINT16 *histogram;
-	const static int gridRadius = 5;
+	const static int gridRadius = 8;
 	UINT16 **columnHistogram;
 	const int gridElementLen = gridRadius * gridRadius;
 };

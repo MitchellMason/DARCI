@@ -1,12 +1,28 @@
-﻿Build started 4/27/2015 11:53:37 AM.
-     1>Project "C:\Users\Mitchell-Thesis\Documents\DARCI\DARCI\DARCI\DARCI\DARCI.vcxproj" on node 2 (Build target(s)).
+﻿Build started 4/28/2015 1:46:34 AM.
+     1>Project "C:\Users\thefr_000\Documents\DARCI\DARCI\DARCI\DARCI\DARCI.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I"C:\Users\Mitchell-Thesis\Documents\Libraries\OculusSDK\LibOVR\Src" /I"C:\Users\Mitchell-Thesis\Documents\Libraries\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\inc" /I"C:\Users\Mitchell-Thesis\Documents\Libraries\OculusSDK\LibOVR\Include" /I"C:\Users\Mitchell-Thesis\Documents\Libraries\glew-1.12.0\include" /I"C:\Users\Mitchell-Thesis\Documents\Libraries\SDL2-2.0.3\include" /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _CRT_SECURE_NO_WARNINGS /D _DEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Kinect2.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I"C:\Users\thefr_000\Documents\Libraries\SDL2-2.0.3\include" /IC:\Users\thefr_000\Documents\Libraries\opencv\build\include /IC:\Users\thefr_000\Documents\Libraries\OculusSDK\LibOVR\Src /IC:\Users\thefr_000\Documents\Libraries\OculusSDK\LibOVR\Include /I"C:\Users\thefr_000\Documents\Libraries\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\inc" /I"C:\Users\thefr_000\Documents\Libraries\glew-1.12.0\include" /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _CRT_SECURE_NO_WARNINGS /D _DEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt DARCI.cpp dataTypes.cpp InputDevice.cpp Kinect2.cpp NetClient.cpp NetServer.cpp OculusRenderer.cpp OVR_SDL2_app.cpp OVR_SDL2_nav.cpp
+         OVR_SDL2_nav.cpp
+         OVR_SDL2_app.cpp
+         OculusRenderer.cpp
+     1>c:\users\thefr_000\documents\darci\darci\darci\darci\oculusrenderer.cpp(147): warning C4244: 'argument' : conversion from 'int' to 'float', possible loss of data
+     1>c:\users\thefr_000\documents\darci\darci\darci\darci\oculusrenderer.cpp(148): warning C4244: 'argument' : conversion from 'int' to 'float', possible loss of data
+     1>c:\users\thefr_000\documents\darci\darci\darci\darci\oculusrenderer.cpp(163): warning C4244: 'argument' : conversion from 'const int' to 'float', possible loss of data
+     1>c:\users\thefr_000\documents\darci\darci\darci\darci\oculusrenderer.cpp(163): warning C4244: 'argument' : conversion from 'int' to 'float', possible loss of data
+     1>c:\users\thefr_000\documents\darci\darci\darci\darci\oculusrenderer.cpp(164): warning C4244: 'argument' : conversion from 'const int' to 'float', possible loss of data
+     1>c:\users\thefr_000\documents\darci\darci\darci\darci\oculusrenderer.cpp(164): warning C4244: 'argument' : conversion from 'int' to 'float', possible loss of data
+         NetServer.cpp
+     1>c:\users\thefr_000\documents\darci\darci\darci\darci\netserver.cpp(193): warning C4390: ';' : empty controlled statement found; is this the intent?
+         NetClient.cpp
          Kinect2.cpp
-     1>c:\users\mitchell-thesis\documents\darci\darci\darci\darci\kinect2.cpp(298): warning C4244: 'initializing' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\mitchell-thesis\documents\darci\darci\darci\darci\kinect2.cpp(299): warning C4244: 'initializing' : conversion from 'float' to 'int', possible loss of data
+     1>c:\users\thefr_000\documents\darci\darci\darci\darci\kinect2.cpp(385): warning C4244: 'initializing' : conversion from 'float' to 'int', possible loss of data
+     1>c:\users\thefr_000\documents\darci\darci\darci\darci\kinect2.cpp(386): warning C4244: 'initializing' : conversion from 'float' to 'int', possible loss of data
+         InputDevice.cpp
+         dataTypes.cpp
+         DARCI.cpp
+         Generating Code...
        Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Mitchell-Thesis\Documents\DARCI\DARCI\DARCI\Debug\DARCI.exe" /INCREMENTAL /NOLOGO /LIBPATH:"C:\Users\Mitchell-Thesis\Documents\Libraries\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\Lib\x86" /LIBPATH:"C:\Users\Mitchell-Thesis\Documents\Libraries\SDL2-2.0.3\VisualC\SDLmain\Win32\Debug" /LIBPATH:"C:\Users\Mitchell-Thesis\Documents\Libraries\SDL2-2.0.3\VisualC\SDL\Win32\Debug" /LIBPATH:"C:\Users\Mitchell-Thesis\Documents\Libraries\glew-1.12.0\lib\Debug\Win32" /LIBPATH:"C:\Users\Mitchell-Thesis\Documents\Libraries\OculusSDK\LibOVR\Lib\Win32\VS2013" Kinect20.lib SDL2.lib SDL2main.lib libovr.lib glew32d.lib ws2_32.lib opengl32.lib winmm.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\Mitchell-Thesis\Documents\DARCI\DARCI\DARCI\Debug\DARCI.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Mitchell-Thesis\Documents\DARCI\DARCI\DARCI\Debug\DARCI.lib" /MACHINE:X86 /PROFILE Debug\DARCI.obj
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\thefr_000\Documents\DARCI\DARCI\DARCI\Debug\DARCI.exe" /INCREMENTAL /NOLOGO /LIBPATH:"C:\Users\thefr_000\Documents\Libraries\SDL2-2.0.3\VisualC\SDLmain\Win32\Debug" /LIBPATH:"C:\Users\thefr_000\Documents\Libraries\SDL2-2.0.3\VisualC\SDL\Win32\Debug" /LIBPATH:C:\Users\thefr_000\Documents\Libraries\OculusSDK\LibOVR\Lib\Win32\VS2013 /LIBPATH:"C:\Users\thefr_000\Documents\Libraries\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\Lib\x86" /LIBPATH:"C:\Users\thefr_000\Documents\Libraries\glew-1.12.0\lib\Debug\Win32" /LIBPATH:"C:\Users\Mitchell-Thesis\Documents\Libraries\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\Lib\x86" /LIBPATH:"C:\Users\Mitchell-Thesis\Documents\Libraries\SDL2-2.0.3\VisualC\SDLmain\Win32\Debug" /LIBPATH:"C:\Users\Mitchell-Thesis\Documents\Libraries\SDL2-2.0.3\VisualC\SDL\Win32\Debug" /LIBPATH:"C:\Users\Mitchell-Thesis\Documents\Libraries\glew-1.12.0\lib\Debug\Win32" /LIBPATH:"C:\Users\Mitchell-Thesis\Documents\Libraries\OculusSDK\LibOVR\Lib\Win32\VS2013" Kinect20.lib SDL2.lib SDL2main.lib libovr.lib glew32d.lib ws2_32.lib opengl32.lib winmm.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\thefr_000\Documents\DARCI\DARCI\DARCI\Debug\DARCI.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\thefr_000\Documents\DARCI\DARCI\DARCI\Debug\DARCI.lib" /MACHINE:X86 /PROFILE Debug\DARCI.obj
          Debug\dataTypes.obj
          Debug\InputDevice.obj
          Debug\Kinect2.obj
@@ -17,9 +33,9 @@
          Debug\OVR_SDL2_nav.obj
      1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/PROFILE' specification
      1>DARCI.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/OPT:LBR' specification
-         DARCI.vcxproj -> C:\Users\Mitchell-Thesis\Documents\DARCI\DARCI\DARCI\Debug\DARCI.exe
-     1>Done Building Project "C:\Users\Mitchell-Thesis\Documents\DARCI\DARCI\DARCI\DARCI\DARCI.vcxproj" (Build target(s)).
+         DARCI.vcxproj -> C:\Users\thefr_000\Documents\DARCI\DARCI\DARCI\Debug\DARCI.exe
+     1>Done Building Project "C:\Users\thefr_000\Documents\DARCI\DARCI\DARCI\DARCI\DARCI.vcxproj" (Build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:01.01
+Time Elapsed 00:00:05.63

@@ -53,12 +53,12 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>C:\Users\Mitchell-Thesis\Documents\Libraries\OculusSDK\LibOVR\Src;C:\Users\Mitchell-Thesis\Documents\Libraries\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\inc;C:\Users\Mitchell-Thesis\Documents\Libraries\OculusSDK\LibOVR\Include;C:\Users\Mitchell-Thesis\Documents\Libraries\glew-1.12.0\include;C:\Users\Mitchell-Thesis\Documents\Libraries\SDL2-2.0.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\thefr_000\Documents\Libraries\SDL2-2.0.3\include;C:\Users\thefr_000\Documents\Libraries\opencv\build\include;C:\Users\thefr_000\Documents\Libraries\OculusSDK\LibOVR\Src;C:\Users\thefr_000\Documents\Libraries\OculusSDK\LibOVR\Include;C:\Users\thefr_000\Documents\Libraries\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\inc;C:\Users\thefr_000\Documents\Libraries\glew-1.12.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\Mitchell-Thesis\Documents\Libraries\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\Lib\x86;C:\Users\Mitchell-Thesis\Documents\Libraries\SDL2-2.0.3\VisualC\SDLmain\Win32\Debug;C:\Users\Mitchell-Thesis\Documents\Libraries\SDL2-2.0.3\VisualC\SDL\Win32\Debug;C:\Users\Mitchell-Thesis\Documents\Libraries\glew-1.12.0\lib\Debug\Win32;C:\Users\Mitchell-Thesis\Documents\Libraries\OculusSDK\LibOVR\Lib\Win32\VS2013;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\thefr_000\Documents\Libraries\SDL2-2.0.3\VisualC\SDLmain\Win32\Debug;C:\Users\thefr_000\Documents\Libraries\SDL2-2.0.3\VisualC\SDL\Win32\Debug;C:\Users\thefr_000\Documents\Libraries\OculusSDK\LibOVR\Lib\Win32\VS2013;C:\Users\thefr_000\Documents\Libraries\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\Lib\x86;C:\Users\thefr_000\Documents\Libraries\glew-1.12.0\lib\Debug\Win32;C:\Users\Mitchell-Thesis\Documents\Libraries\Microsoft SDKs\Kinect\v2.0-PublicPreview1409\Lib\x86;C:\Users\Mitchell-Thesis\Documents\Libraries\SDL2-2.0.3\VisualC\SDLmain\Win32\Debug;C:\Users\Mitchell-Thesis\Documents\Libraries\SDL2-2.0.3\VisualC\SDL\Win32\Debug;C:\Users\Mitchell-Thesis\Documents\Libraries\glew-1.12.0\lib\Debug\Win32;C:\Users\Mitchell-Thesis\Documents\Libraries\OculusSDK\LibOVR\Lib\Win32\VS2013;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>Kinect20.lib;SDL2.lib;SDL2main.lib;libovr.lib;glew32d.lib;ws2_32.lib;opengl32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
     </Link>
