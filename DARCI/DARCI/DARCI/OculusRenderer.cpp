@@ -22,8 +22,8 @@ static const char *vshader = R"(
 
 		//Each pixel represents distance, in mm from the Kinect sensor
 		depLookup = texture(depthTex, vTexCoord);
-		//displacedvPosition.z = depLookup * -275.0f;
-		displacedvPosition.z = 1.0f;
+		displacedvPosition.z = depLookup * -275.0f;
+		//displacedvPosition.z = 1.0f;
 		//displacedvPosition.z = depLookup;
 
 		gl_Position = proj * view * model * displacedvPosition;
@@ -45,12 +45,12 @@ static const char *fshader = R"(
 		//if the depth map input was 0, it's depth is unknown, thus we shouldn't draw it.
 		vec4 colorMap = texture2D(colorTex, fTexCoord);
 		if(depLookup == 0){
-			//fOutput = vec4(0.0,0.0,0.0,0.0);
+			fOutput = vec4(0.0,0.0,0.0,0.0);
 			//fOutput = vec4(colorMap.r, colorMap.g, colorMap.b, 1.0);
 		}
 		else{
-			//fOutput = vec4(colorMap.r, colorMap.g, colorMap.b, 1.0);
-			fOutput = vec4(mod(depLookup, 1.0),mod(depLookup, 1.0),mod(depLookup, 1.0),1.0);
+			fOutput = vec4(colorMap.r, colorMap.g, colorMap.b, 1.0);
+			//fOutput = vec4(mod(depLookup, 1.0),mod(depLookup, 1.0),mod(depLookup, 1.0),1.0);
 			//fOutput = vec4(0.0,0.0,0.0,1.0);
 		}
 	}
@@ -236,6 +236,7 @@ void OculusRenderer::draw(){
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//color
+	if (data->newData){
 	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, colorTexture);
@@ -265,7 +266,7 @@ void OculusRenderer::draw(){
 		GL_UNSIGNED_SHORT,				//type
 		data->depthBuff					//pixels 
 		);
-	
+	}
 
 	//calculate and update the projection and view matricies
 	mat4 P = projection();

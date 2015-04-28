@@ -30,7 +30,7 @@ void init(){
 	camera->start();
 
 	//start the server
-	const char* remAddr = "127.0.0.1";//"169.254.8.212";
+	const char* remAddr = "169.254.8.212";
 	printf("-Creating server.\n");
 	server = new NetServer(remAddr, basePort, camera);
 	printf("--hosting to %s\n",remAddr);

@@ -229,130 +229,6 @@ void Kinect2::lerp(UINT16 *start, UINT16 elements, UINT16 from, UINT16 to){
 	}
 }
 
-int inline Kinect2::to2Dindex(int x, int y, int width){ return (y * width) + x; }
-
-#define DEBUG FALSE
-
-//cleans up depth data errors using the Fast Median filter
-void Kinect2::repairDepthData(UINT16* depthFrame){
-#if DEBUG > 0
-	printf("DEPTH FRAME\n");
-	for (int y = 0; y < gridRadius + 1; y++){
-		for (int x = 0; x < gridRadius + 1; x++){
-			printf("%i ",depthFrame[to2Dindex(x, y, kDepWidth)]);
-		}
-		printf("\n");
-	}
-#endif
-
-	//initialize data containers
-	UINT16 *sortedHistogram = new UINT16[gridElementLen];
-	for (int i = 0; i < kDepWidth; i++){
-		for (int j = 0; j < gridRadius; j++){
-			columnHistogram[i][j] = depthFrame[(j*kDepWidth) + i];
-		}
-	}
-	
-	for (int i = 0; i < gridRadius; i++){
-		for (int j = 0; j < gridRadius; j++){
-			histogram[(i*gridRadius) + j] = columnHistogram[i][j];
-		}
-	}
-
-	//determine the first value
-	/*
-	memcpy((void *)sortedHistogram, (void *)histogram, gridElementLen * sizeof(UINT16));
-	std::sort(&(sortedHistogram[0]), &(sortedHistogram[gridElementLen - 1]));
-	correctedDepth[gridRadius / 2] = sortedHistogram[gridElementLen / 2];
-	*/
-	for (int i = 0; i < kDepHeight; i++){
-		for (int j = 0; j < kDepWidth; j++){
-#if DEBUG > 0
-			printf("\nColumn %i\n", j);
-			printf("Before:[");
-			for (int k = 0; k < gridRadius; k++){
-				printf("%i ", columnHistogram[j][k]);
-			}
-			printf("]\n");
-#endif
-			//remove the first element in the current column
-			memcpy(&(columnHistogram[j][0]), &(columnHistogram[j][1]), (gridRadius - 1) * sizeof(UINT16));
-			
-#if DEBUG > 0
-			printf("After: [");
-			for (int k = 0; k < gridRadius; k++){
-				printf("%i ", columnHistogram[j][k]);
-			}
-			printf("]\n");
-#endif
-			//replace it with the new element to consider
-			columnHistogram[j][gridRadius - 1] = depthFrame[to2Dindex(i, j + gridRadius, kDepWidth)];
-			
-#if DEBUG > 0
-			printf("Final: [");
-			for (int k = 0; k < gridRadius; k++){
-				printf("%i ", columnHistogram[j][k]);
-			}
-			printf("]\n");
-			
-			printf("\nHistogram algorithm\n");
-			printf("Before: {\n");
-			for (int k1 = 0; k1 < gridRadius; k1++){
-				printf("[");
-				for (int k2 = 0; k2 < gridRadius; k2++){
-					printf("%i ", histogram[to2Dindex(k2, k1, gridRadius)]);
-				}
-				printf("]\n");
-			}
-			printf("}\n");
-#endif
-			//delete the last column in the histogram and replace with the fresh column just calculated
-			//for (int h = 0; h < gridRadius; h++){
-			//	histogram[to2Dindex(0, h, gridRadius)] = columnHistogram[i+gridRadius][j+h];
-			//}
-			memcpy(&(histogram[0]), &(histogram[gridRadius]), (gridElementLen - gridRadius) * sizeof(UINT16));
-			memcpy(&(histogram[gridElementLen - gridRadius]), &(columnHistogram[i + gridRadius][j]), gridRadius * sizeof(UINT16));
-
-#if DEBUG > 0
-			printf("After: {\n");
-			for (int k1 = 0; k1 < gridRadius; k1++){
-				printf("[");
-				for (int k2 = 0; k2 < gridRadius; k2++){
-					printf("%i ", histogram[to2Dindex(k2, k1, gridRadius)]);
-				}
-				printf("]\n");
-			}
-			printf("}\n");
-#endif
-
-			
-
-			//move it to be sorted
-			memcpy(sortedHistogram, histogram, gridElementLen * sizeof(UINT16));
-			std::sort(&(sortedHistogram[0]), &(sortedHistogram[gridElementLen - 1]));
-
-#if DEBUG > 0
-			printf("output list: ");
-			for (int i = 0; i < gridElementLen; i++){
-				printf("%i ", sortedHistogram[i]);
-			}
-			printf("\n");
-
-			printf("Final median value: %i", sortedHistogram[gridElementLen / 2]);
-#endif
-			correctedDepth[to2Dindex(j,i, kDepWidth) ] = sortedHistogram[gridElementLen / 2];
-		}
-#if DEBUG > 0
-		printf("NEXT ROW: %i\n", i);
-#endif
-	}
-
-	//finish up
-	memcpy(depthFrame, correctedDepth, kDepWidth * kDepHeight * sizeof(UINT16));
-	delete[] sortedHistogram;
-}
-
-
 void Kinect2::getData(cameraData* data){
 	//get the raw data
 	getColor(rawColor);
@@ -391,9 +267,7 @@ void Kinect2::getData(cameraData* data){
 						memcpy((void *)pix, (void *)&(rawColorBuffer[pixIndex * 3]), 3);
 					}
 				}
-				else{
-					depthBuffer[i] = 0;
-				}
+				
 
 				//copy the RGB values from the mapped version into the new texture
 				memcpy((void *)&(data->color.getBuffer()[i * 3]), (void *)pix, sizeof(BYTE) * 3);
@@ -410,14 +284,5 @@ void Kinect2::getData(cameraData* data){
 	}
 
 	//clean up the depth data for better rendering
-	//for test input
-#if DEBUG > 0
-	printf("Generating test input\n");
-	for (int i = 0; i < kDepWidth * kDepHeight; i++){
-		((UINT16*)depthBuffer)[i] = i;
-	}
-	printf("Done\n");
-#endif
-	//repairDepthData((UINT16*)depthBuffer);
-	cv::medianBlur()
+	//cv::medianBlur((cv::InputArray)(depthBuffer), (cv::OutputArray)(correctedDepth), 5);
 }
